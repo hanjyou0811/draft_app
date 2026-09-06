@@ -1,0 +1,11 @@
+node_modules/
+dist/
+data/
+*.db
+*.db-shm
+*.db-wal
+.worktrees/
+.superpowers/
+test-results/
+playwright-report/
+.env
