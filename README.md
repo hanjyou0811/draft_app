@@ -1,5 +1,7 @@
 # Draft Room
 
+**[ブラウザで遊ぶ](https://draft.ma-kun.fans/)** — インストール不要で利用できます。
+
 招待URLを共有し、複数の参加者が同時に選手を指名できる日本語Webアプリです。指名が重なるとサーバーが抽選し、外れた参加者だけが再指名します。途中経過と完成したチームは、ローカル実行ではSQLite、VercelではSupabaseに保存されます。
 
 Vercelへの公開手順は [Vercel + Supabaseへのデプロイ](docs/deployment/vercel-supabase.md) を参照してください。画面の同期は1秒間隔のAPI取得を使います。
