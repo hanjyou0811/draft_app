@@ -1,0 +1,36 @@
+{
+  "name": "draft-room",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "dev": "tsx scripts/dev.ts",
+    "dev:client": "vite",
+    "dev:server": "tsx watch server/index.ts",
+    "test:e2e": "playwright test",
+    "start": "tsx server/index.ts",
+    "test": "tsx --test domain/*.test.ts server/*.test.ts",
+    "test:server": "tsx --test server/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "ws": "8.21.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/ws": "8.18.1",
+    "@vitejs/plugin-react": "6.1.1",
+    "tsx": "4.23.13",
+    "typescript": "7.0.2",
+    "vite": "8.2.2"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}
