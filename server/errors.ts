@@ -20,6 +20,7 @@ const domainErrors: Record<DomainErrorCode, PublicError> = {
   INVALID_ROOM_ID: { status: 400, message: '会議IDが正しくありません。' },
   INVALID_MEMBER_ID: { status: 400, message: '参加者IDが正しくありません。' },
   INVALID_TOKEN_HASH: { status: 400, message: '認証情報が正しくありません。' },
+  INVALID_TOPIC: { status: 400, message: 'お題は100文字以内で入力してください。' },
   INVALID_MEMBER_NAME: { status: 400, message: '表示名を1〜30文字で入力してください。' },
   DUPLICATE_MEMBER_ID: { status: 409, message: '参加者IDが重複しています。' },
   DUPLICATE_MEMBER_NAME: { status: 409, message: '同じ表示名の参加者がいます。' },

@@ -30,6 +30,7 @@ export interface Outcome extends RoundKey {
 }
 
 export interface Room {
+  readonly topic?: string;
   readonly id: string;
   readonly status: RoomStatus;
   readonly teamSize: number;
@@ -54,6 +55,7 @@ export interface MemberInput {
 }
 
 export interface CreateRoomInput {
+  readonly topic?: string;
   id: string;
   host: MemberInput;
   candidates: CandidateInput[];
@@ -73,6 +75,7 @@ export interface ActiveSubmission extends RoundKey {
 }
 
 export interface RoomView {
+  readonly topic?: string;
   readonly id: string;
   readonly status: RoomStatus;
   readonly teamSize: number;

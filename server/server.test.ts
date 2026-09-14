@@ -195,6 +195,40 @@ describe('server configuration', () => {
 });
 
 describe('HTTP API', () => {
+  test('optional topic is trimmed, shared, and persisted across restart', async () => {
+    const { path } = await temporaryDatabase();
+    const first = await startTestServer(path);
+    const created = await jsonRequest(first.origin, 'POST', '/api/rooms', {
+      name: '主催', names: 'A\nB', teamSize: 1, topic: '  夏に食べたいもの  ',
+    });
+    assert.equal(created.status, 201);
+    const roomPath = `/api/rooms/${String(created.body.roomId)}`;
+    const token = String(created.body.token);
+    assert.equal((await jsonRequest(first.origin, 'GET', `${roomPath}/info`)).body.topic, '夏に食べたいもの');
+    const guest = await jsonRequest(first.origin, 'POST', `${roomPath}/join`, { name: '参加者' });
+    assert.equal((await jsonRequest(first.origin, 'GET', roomPath, undefined, String(guest.body.token))).body.topic, '夏に食べたいもの');
+    assert.equal((await jsonRequest(first.origin, 'POST', `${roomPath}/start`, {}, token)).body.topic, '夏に食べたいもの');
+    await first.server.close();
+    runningServers.splice(runningServers.indexOf(first.server), 1);
+    const second = await startTestServer(path);
+    assert.equal((await jsonRequest(second.origin, 'GET', roomPath, undefined, token)).body.topic, '夏に食べたいもの');
+  });
+
+  test('optional topic accepts blank and 100 characters and rejects invalid values', async () => {
+    const { path } = await temporaryDatabase();
+    const { origin } = await startTestServer(path);
+    for (const topic of ['', '   ', '題'.repeat(100)]) {
+      const created = await jsonRequest(origin, 'POST', '/api/rooms', { name: '主催', names: 'A\nB', teamSize: 1, topic });
+      assert.equal(created.status, 201);
+      const info = await jsonRequest(origin, 'GET', `/api/rooms/${String(created.body.roomId)}/info`);
+      assert.equal(info.body.topic, topic.trim() || undefined);
+    }
+    for (const topic of [null, 42, [], {}, '題'.repeat(101)]) {
+      const response = await jsonRequest(origin, 'POST', '/api/rooms', { name: '主催', names: 'A\nB', teamSize: 1, topic });
+      assert.equal(response.status, 400);
+    }
+  });
+
   test('creates, joins, reports public info, and requires a valid bearer token', async () => {
     const { path } = await temporaryDatabase();
     const { origin } = await startTestServer(path);

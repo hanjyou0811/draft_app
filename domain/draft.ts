@@ -13,6 +13,7 @@ import type {
 
 export type DomainErrorCode =
   | 'INVALID_ROOM_ID'
+  | 'INVALID_TOPIC'
   | 'INVALID_MEMBER_ID'
   | 'INVALID_TOKEN_HASH'
   | 'INVALID_MEMBER_NAME'
@@ -124,6 +125,10 @@ function recordedCandidateId(room: Room, memberId: string, roundKey: RoundKey): 
 }
 
 export function createRoom(input: CreateRoomInput): Room {
+  if (input.topic !== undefined && (typeof input.topic !== 'string' || input.topic.trim().length > 100)) {
+    fail('INVALID_TOPIC', 'topic must be a string of at most 100 characters');
+  }
+  const topic = input.topic?.trim();
   const id = normalizedText(input.id, 'INVALID_ROOM_ID', 'room id');
   if (!Number.isInteger(input.teamSize) || input.teamSize < 1 || input.teamSize > 50) {
     fail('INVALID_TEAM_SIZE', 'team size must be an integer between 1 and 50');
@@ -145,6 +150,7 @@ export function createRoom(input: CreateRoomInput): Room {
   return {
     id,
     status: 'waiting',
+    ...(topic ? { topic } : {}),
     teamSize: input.teamSize,
     round: 1,
     attempt: 1,
@@ -331,6 +337,7 @@ export function toView(room: Room, ownMemberId: string): RoomView {
     : undefined;
   const view: RoomView = {
     id: room.id,
+    ...(room.topic ? { topic: room.topic } : {}),
     status: room.status,
     teamSize: room.teamSize,
     round: room.round,

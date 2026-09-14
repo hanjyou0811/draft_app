@@ -46,6 +46,7 @@ export function JoinRoom({ roomId, onJoined }: {
       <section className="paper-card join-card">
         <p className="step-label">INVITATION</p>
         <h1>ドラフト会議に参加</h1>
+        {info.topic && <p className="room-topic"><span>お題</span>{info.topic}</p>}
         <p>{info.participantCount}チームが待機中です。あなたのチーム名を入力してください。</p>
         <form onSubmit={(event) => void submit(event)}>
           <label>表示名<input value={name} onChange={(event) => setName(event.target.value)} maxLength={30} required autoComplete="nickname" /></label>

@@ -92,6 +92,7 @@ export async function routeApi(
     const credentials = await service.createRoom({
       name: requireString(body, 'name'),
       names: requireString(body, 'names'),
+      ...(body.topic === undefined ? {} : { topic: requireString(body, 'topic') }),
       teamSize: requireNumber(body, 'teamSize'),
     });
     sendJson(response, 201, credentials);

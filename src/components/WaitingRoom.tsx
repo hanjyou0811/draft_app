@@ -35,6 +35,7 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
         <div><p className="eyebrow">WAITING ROOM</p><h1>ドラフト待機室</h1><p>参加者が揃ったら、作成者が会議を開始します。</p></div>
         <ConnectionStatus status={syncStatus} />
       </div>
+      {room.topic && <p className="room-topic"><span>お題</span>{room.topic}</p>}
       <section className="panel invite-panel">
         <div className="section-heading"><p className="step-label">STEP 02</p><h2>仲間を招待</h2></div>
         <div className="invite-row">

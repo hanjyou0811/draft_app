@@ -20,6 +20,7 @@ export class ServiceError extends Error {
 }
 
 export interface CreateRoomRequest {
+  readonly topic?: string;
   readonly name: string;
   readonly names: string;
   readonly teamSize: number;
@@ -36,6 +37,7 @@ export interface PickRequest {
 }
 
 export interface RoomInfo {
+  readonly topic?: string;
   readonly status: Room['status'];
   readonly teamSize: number;
   readonly participantCount: number;
@@ -88,6 +90,7 @@ export class DraftService {
         host: { id: memberId, name: input.name, tokenHash: hashToken(token) },
         candidates,
         teamSize: input.teamSize,
+        ...(input.topic !== undefined ? { topic: input.topic } : {}),
       });
       try {
         await this.#enqueue(roomId, () => this.repository.create(room));
@@ -103,6 +106,7 @@ export class DraftService {
       const room = await this.#requireRoom(roomId);
       return {
         status: room.status,
+        ...(room.topic ? { topic: room.topic } : {}),
         teamSize: room.teamSize,
         participantCount: room.members.length,
       };

@@ -1,0 +1,85 @@
+/* Draft Stage: the selected navy ceremony direction, scoped to the live room. */
+.app-shell:has(.draft-stage) { background: #0b2a40; }
+.app-shell:has(.draft-stage) .site-header { height: 80px; padding-inline: max(32px, calc((100vw - 1328px) / 2)); border: 0; }
+.app-shell:has(.draft-stage) .brand { color: #f4f9fc; font-size: 30px; font-weight: 800; letter-spacing: .025em; line-height: 1; }
+.app-shell:has(.draft-stage) .brand strong { color: inherit; font: inherit; }
+.app-shell:has(.draft-stage) .brand br { display: none; }
+.app-shell:has(.draft-stage) .brand strong::before { content: ' '; }
+.app-shell:has(.draft-stage) .brand-mark,
+.app-shell:has(.draft-stage) .site-header > p { display: none; }
+.app-shell:has(.draft-stage) footer { color: #b2c6d3; border-color: #355165; }
+.draft-stage { color: #f4f9fc; position: relative; }
+.stage-connection { position: absolute; right: max(32px, calc((100vw - 1328px) / 2)); top: -65px; }
+.stage-connection .connection { color: #ffe0a6; border: 0; background: transparent; font-size: 14px; }
+.stage-connection .connection--synced { color: #afe5ff; }
+.stage-members { width: min(1328px, calc(100% - 64px)); margin: 0 auto; display: flex; overflow-x: auto; scrollbar-color: #afe5ff #0b2a40; }
+.stage-member { flex: 1 0 160px; min-width: 0; padding: 0 24px 20px; text-align: center; border-bottom: 3px solid transparent; position: relative; }
+.stage-member + .stage-member { border-left: 1px solid #426073; }
+.stage-member strong { display: block; font-size: 22px; overflow-wrap: anywhere; }
+.stage-member > span:not(.visually-hidden) { display: block; margin-top: 4px; color: #c5d5df; font-size: 14px; }
+.stage-member--own { border-bottom-color: #9ce6ff; }
+.stage-member--own > span:not(.visually-hidden) { color: #9ce6ff; }
+.stage-spotlight { padding: 65px 32px 34px; text-align: center; min-height: 545px; }
+.stage-spotlight h1, .stage-name, .stage-caption, .stage-section-heading h2, .stage-candidate strong { font-family: 'Yu Mincho', 'Hiragino Mincho ProN', 'Noto Serif CJK JP', serif; }
+.stage-spotlight h1 { margin: 0; font-size: 26px; font-weight: 500; letter-spacing: .09em; }
+.stage-name { max-width: 1120px; margin: 24px auto 18px; font-size: clamp(56px, 8.7vw, 126px); line-height: 1.4; letter-spacing: .06em; font-weight: 500; overflow-wrap: anywhere; }
+.stage-name--message { font-size: clamp(32px, 4.5vw, 65px); padding-block: 32px; }
+.stage-caption { display: flex; justify-content: center; align-items: center; gap: 22px; margin: 12px auto 36px; max-width: 860px; font-size: 22px; overflow-wrap: anywhere; color: #dceaf3; }
+.stage-caption::before, .stage-caption::after { content: ''; flex: 0 1 108px; border-top: 1px solid #9ab4c6; }
+.stage-submit { width: min(500px, 100%); min-height: 90px; padding: 20px 26px; border-radius: 12px; color: #082d43; background: #9ce6ff; font-size: 27px; }
+.stage-submit:disabled { opacity: 1; color: #b7ccd9; background: #294a60; }
+.stage-submit:hover:not(:disabled) { background: #c0efff; }
+.stage-feedback { min-height: 34px; margin-top: 16px; color: #d5e4ee; font-size: 15px; }
+.stage-feedback p { margin: 0; }
+.stage-candidates { background: #eff8fc; color: #0b2a40; padding: 30px max(32px, calc((100vw - 1328px) / 2)) 38px; }
+.stage-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.stage-section-heading h2 { font-size: 32px; margin: 0; }
+.stage-section-heading a { font-size: 15px; padding-block: 10px; }
+.stage-candidates fieldset { padding: 0; margin: 0; border: 0; min-width: 0; }
+.stage-candidate-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.stage-candidate { min-width: 0; min-height: 88px; display: flex; align-items: center; gap: 18px; padding: 20px 24px; border-bottom: 1px solid #c6dce7; cursor: pointer; }
+.stage-candidate strong { font-size: 27px; font-weight: 600; overflow-wrap: anywhere; }
+.stage-candidate input { position: static; flex: 0 0 24px; width: 24px; height: 24px; margin: 0; accent-color: #08749a; cursor: inherit; }
+.stage-candidate > span { margin-left: auto; flex-shrink: 0; font-size: 12px; color: #526b7a; }
+.stage-candidate--selected { background: #ceeffc; border-radius: 6px; }
+.stage-candidate:hover:not(:has(input:disabled)) { background: #dceff8; }
+.stage-candidate:has(input:disabled) { cursor: default; }
+.stage-candidate--acquired strong { color: #627987; }
+.stage-candidate:has(input:focus-visible) { outline: 3px solid #08749a; outline-offset: -3px; }
+.stage-results { padding: 32px max(32px, calc((100vw - 1328px) / 2)) 56px; background: #eff8fc; display: grid; gap: 24px; }
+.stage-results .panel { padding: 28px 0; border: 0; border-top: 1px solid #c6dce7; border-radius: 0; background: transparent; box-shadow: none; animation: none; }
+.stage-results .team-card, .stage-results .history-list li { border-radius: 8px; }
+.stage-results h3, .stage-results li, .stage-results strong { overflow-wrap: anywhere; }
+#draft-history { scroll-margin-top: 24px; }
+.draft-stage button:focus-visible { outline-color: #f4f9fc; }
+@media (max-width: 800px) {
+  .app-shell:has(.draft-stage) .site-header { padding-inline: 20px; height: 72px; }
+  .app-shell:has(.draft-stage) .brand { font-size: 23px; }
+  .stage-connection { top: -61px; right: 12px; }
+  .stage-connection .connection { margin-top: 12px; font-size: 12px; }
+  .stage-members { width: calc(100% - 40px); }
+  .stage-member { flex-basis: 130px; padding-inline: 16px; }
+  .stage-member strong { font-size: 18px; }
+  .stage-spotlight { min-height: 450px; padding: 48px 24px 32px; }
+  .stage-spotlight h1 { font-size: 21px; }
+  .stage-caption { font-size: 17px; margin-bottom: 28px; gap: 12px; }
+  .stage-submit { min-height: 68px; font-size: 21px; }
+  .stage-candidates, .stage-results { padding-inline: 20px; }
+  .stage-candidate-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stage-candidate { padding: 18px 14px; gap: 12px; }
+  .stage-candidate strong { font-size: 22px; }
+}
+@media (max-width: 460px) {
+  .stage-member { flex-basis: 115px; }
+  .stage-spotlight { min-height: 0; padding: 38px 20px 28px; }
+  .stage-spotlight h1 { font-size: 19px; letter-spacing: .02em; }
+  .stage-name { font-size: 48px; margin-block: 24px; }
+  .stage-name--message { font-size: 30px; padding-block: 12px; }
+  .stage-caption { font-size: 16px; }
+  .stage-feedback { font-size: 14px; }
+  .stage-section-heading h2 { font-size: 26px; }
+  .stage-section-heading a { font-size: 13px; }
+  .stage-candidate-list { grid-template-columns: minmax(0, 1fr); }
+  .stage-candidate { min-height: 72px; }
+  .stage-results .history-list li { grid-template-columns: minmax(0, 1fr); }
+}

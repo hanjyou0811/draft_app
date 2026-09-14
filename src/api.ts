@@ -1,6 +1,7 @@
 import type { Credentials, RoomStatus, RoomView } from '../shared/types.js';
 
 export interface RoomInfo {
+  readonly topic?: string;
   readonly status: RoomStatus;
   readonly teamSize: number;
   readonly participantCount: number;
@@ -103,7 +104,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 const authorization = (token: string): HeadersInit => ({ authorization: `Bearer ${token}` });
 
 export const api = {
-  createRoom: (body: { name: string; names: string; teamSize: number }) =>
+  createRoom: (body: { name: string; names: string; teamSize: number; topic?: string }) =>
     request<Credentials>('/api/rooms', { method: 'POST', body: JSON.stringify(body) }),
   getInfo: (roomId: string) => request<RoomInfo>(`/api/rooms/${encodeURIComponent(roomId)}/info`),
   joinRoom: (roomId: string, name: string) => request<Credentials>(
