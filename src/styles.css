@@ -32,8 +32,7 @@ a { color: var(--primary); font-weight: 700; text-underline-offset: .2em; }
 .site-header > p { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .12em; }
 .brand { color: var(--on-surface); display: flex; gap: 10px; align-items: center; font-family: "Arial", sans-serif; font-size: 13px; letter-spacing: .18em; line-height: 1.05; text-decoration: none; }
 .brand strong { color: var(--accent); font-size: 18px; }
-.brand-mark { width: 36px; height: 36px; display: grid; place-items: center; color: white; background: var(--on-surface); border-radius: 14px; background: #b9e9ff; color: #005477; }
-.brand-mark::first-line { transform: rotate(-45deg); }
+.brand-mark { display: block; width: 44px; height: 44px; flex: 0 0 auto; }
 
 .landing { width: min(1180px, calc(100% - 48px)); min-height: calc(100vh - 130px); margin: auto; padding: 70px 0 80px; display: grid; grid-template-columns: 1.1fr .9fr; gap: 56px; align-items: center; }
 .hero { position: relative; padding: 40px 0; }

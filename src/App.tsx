@@ -12,7 +12,7 @@ function Header() {
   return (
     <header className="site-header">
       <a href="/" className="brand" aria-label="ドラフトルーム トップ">
-        <span className="brand-mark" aria-hidden="true">◆</span>
+        <img className="brand-mark" src="/logo.svg" width="44" height="44" alt="" />
         <span>DRAFT<br /><strong>ROOM</strong></span>
       </a>
       <p>みんなで決める、リアルタイムドラフト</p>
