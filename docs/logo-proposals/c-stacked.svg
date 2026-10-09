@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">DRAFT ROOM — 選ぶ楽しさを、一つのチームへ</title>
+  <desc id="desc">重ねた選択カードと、二段組みのDRAFT ROOMロゴ。</desc>
+  <g transform="translate(58 25)">
+    <rect x="5" y="15" width="70" height="90" rx="12" transform="rotate(-12 40 60)" fill="#B9E9FF" stroke="#123B4E" stroke-width="5"/>
+    <rect x="36" y="3" width="70" height="90" rx="12" transform="rotate(7 71 48)" fill="#F2F9FC" stroke="#123B4E" stroke-width="5"/>
+    <path d="m56 46 12 13 23-25" stroke="#08749A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m54 76 28 3" stroke="#123B4E" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g fill="#123B4E" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="56" letter-spacing="3">
+    <text x="196" y="74">DRAFT</text>
+    <text x="196" y="129">ROOM</text>
+  </g>
+  <circle cx="399" cy="119" r="9" fill="#08749A"/>
+</svg>

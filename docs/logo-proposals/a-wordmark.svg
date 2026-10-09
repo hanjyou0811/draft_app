@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="160" viewBox="0 0 600 160" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">DRAFT ROOM — Wordmark</title>
+  <desc id="desc">A minimal card-shaped D paired with a refined horizontal DRAFT ROOM wordmark.</desc>
+  <path d="M40 37H72C99 37 116 53 116 80S99 123 72 123H40V37Z" stroke="#123b4e" stroke-width="8" stroke-linejoin="round"/>
+  <path d="M55 54H73C89 54 99 64 99 80S89 106 73 106H55V54Z" fill="#08749a"/>
+  <path d="M55 54V106" stroke="#f2f9fc" stroke-width="5"/>
+  <text x="144" y="95" fill="#123b4e" font-family="Arial, Helvetica, sans-serif" font-size="45" font-weight="700" letter-spacing="2">DRAFT ROOM</text>
+</svg>

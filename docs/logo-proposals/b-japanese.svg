@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" role="img" aria-labelledby="title desc">
+  <title id="title">ドラフトルーム</title>
+  <desc id="desc">丸みのある日本語ロゴと、抽選券がのぞく小さなくじ箱。</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="60" y="36" width="30" height="52" rx="7" transform="rotate(-14 75 62)" stroke="#08749a" stroke-width="6"/>
+    <path d="M71 52l9-2" stroke="#08749a" stroke-width="5"/>
+    <rect x="37" y="75" width="82" height="54" rx="15" fill="#f2f9fc" stroke="#123b4e" stroke-width="6"/>
+    <path d="M60 76h36" stroke="#123b4e" stroke-width="6"/>
+    <path d="M69 102h18" stroke="#08749a" stroke-width="6"/>
+  </g>
+  <text x="144" y="106" fill="#123b4e" font-family="'Hiragino Maru Gothic ProN', 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif" font-size="56" font-weight="800" letter-spacing="-2">ドラフトルーム</text>
+</svg>
