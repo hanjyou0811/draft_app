@@ -38,7 +38,7 @@ export function CreateRoom({ onCreated }: {
   return (
     <main className="landing">
       <section className="hero">
-        <p className="eyebrow">みんなでつくる、最高のチーム</p>
+        <img className="hero-logo" src="/hero-logo.svg" alt="DRAFT ROOM" width="600" height="160" />
         <h1 className="visually-hidden">みんなで楽しむドラフト会議</h1>
         <figure className="hero-lottery">
           <button
