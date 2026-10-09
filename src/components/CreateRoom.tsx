@@ -2,6 +2,9 @@ import { useMemo, useState, type FormEvent } from 'react';
 
 import type { Credentials } from '../../shared/types.js';
 import { api, ApiError, canPersistCredentials, saveCredentials } from '../api.js';
+import lotteryImage from '../../baseball_draft_kuji.png';
+import resultImage from '../../baseball_draft_kekka.png';
+import '../hero-lottery.css';
 
 export function CreateRoom({ onCreated }: {
   readonly onCreated: (credentials: Credentials, persisted: boolean) => void;
@@ -12,6 +15,7 @@ export function CreateRoom({ onCreated }: {
   const [teamSize, setTeamSize] = useState('1');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [lotteryState, setLotteryState] = useState<'idle' | 'drawing' | 'result'>('idle');
   const candidateCount = useMemo(() => names.split(/\r?\n/u).filter((value) => value.trim()).length, [names]);
 
   const submit = async (event: FormEvent) => {
@@ -35,10 +39,25 @@ export function CreateRoom({ onCreated }: {
     <main className="landing">
       <section className="hero">
         <p className="eyebrow">みんなでつくる、最高のチーム</p>
-        <h1>指名の瞬間を、<br /><span>みんなの画面に。</span></h1>
-        <p className="hero__copy">候補を用意して、招待URLを送るだけ。重複指名の抽選から再指名まで、リアルタイムで進みます。</p>
+        <h1 className="visually-hidden">みんなで楽しむドラフト会議</h1>
+        <figure className="hero-lottery">
+          <button
+            type="button"
+            className={`hero-lottery__scene hero-lottery__scene--${lotteryState}`}
+            aria-label={lotteryState === 'result' ? 'もう一度くじを引く準備をする' : 'くじを引く'}
+            aria-disabled={lotteryState === 'drawing'}
+            onClick={() => {
+              if (lotteryState !== 'drawing') setLotteryState(lotteryState === 'idle' ? 'drawing' : 'idle');
+            }}
+            onAnimationEnd={(event) => {
+              if (event.animationName === 'hero-lottery-result') setLotteryState('result');
+            }}
+          >
+            <img className="hero-lottery__image hero-lottery__image--draw" src={lotteryImage} alt="" width="397" height="400" />
+            <img className="hero-lottery__image hero-lottery__image--result" src={resultImage} alt="" width="412" height="450" />
+          </button>
+        </figure>
         <ol className="hero-steps"><li><span>1</span>候補を登録</li><li><span>2</span>URLで招待</li><li><span>3</span>一斉に指名</li></ol>
-        <div className="hero-art" aria-hidden="true"><span className="hero-shape">↗</span><span className="hero-shape">✳</span><span className="hero-shape">✓</span></div>
       </section>
       <section className="paper-card create-card" aria-labelledby="create-title">
         <p className="step-label">STEP 01</p>
