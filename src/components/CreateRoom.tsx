@@ -5,6 +5,7 @@ import { api, ApiError, canPersistCredentials, saveCredentials } from '../api.js
 import lotteryImage from '../../baseball_draft_kuji.png';
 import resultImage from '../../baseball_draft_kekka.png';
 import '../hero-lottery.css';
+import { Button } from './ui/Button.js';
 
 export function CreateRoom({ onCreated }: {
   readonly onCreated: (credentials: Credentials, persisted: boolean) => void;
@@ -66,11 +67,11 @@ export function CreateRoom({ onCreated }: {
           <label>お題（任意）<input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="例：夏に食べたいものドラフト" maxLength={100} aria-describedby="topic-note" /></label>
           <p id="topic-note" className="topic-note">空欄でも作成できます。100文字まで。</p>
           <label>表示名<input value={name} onChange={(event) => setName(event.target.value)} placeholder="例：東京チーム" maxLength={30} required autoComplete="nickname" /></label>
-          <label>候補の名前<textarea value={names} onChange={(event) => setNames(event.target.value)} placeholder={'1行に1人ずつ入力\n例：山田 太郎\n　　鈴木 一郎'} rows={7} required /></label>
+          <label>候補の名前<textarea value={names} onChange={(event) => setNames(event.target.value)} placeholder={'1行に1つずつ入力\n例：そうめん\n　　かき氷'} rows={7} required /></label>
           <p className="field-note"><span>候補 {candidateCount}人</span><span>最大500人</span></p>
           <label>各チームの獲得人数<input value={teamSize} onChange={(event) => setTeamSize(event.target.value)} type="number" min="1" max="50" required /></label>
           {error && <p className="alert alert--error" role="alert">{error}</p>}
-          <button className="primary-button" disabled={busy} type="submit">{busy ? '作成中…' : '会議を作成'}</button>
+          <Button disabled={busy} type="submit">{busy ? '作成中…' : '会議を作成'}</Button>
         </form>
       </section>
     </main>

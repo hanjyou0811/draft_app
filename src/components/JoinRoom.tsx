@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 
 import type { Credentials } from '../../shared/types.js';
 import { api, ApiError, canPersistCredentials, saveCredentials, type RoomInfo } from '../api.js';
+import { Button } from './ui/Button.js';
 
 export function JoinRoom({ roomId, onJoined }: {
   readonly roomId: string;
@@ -51,7 +52,7 @@ export function JoinRoom({ roomId, onJoined }: {
         <form onSubmit={(event) => void submit(event)}>
           <label>表示名<input value={name} onChange={(event) => setName(event.target.value)} maxLength={30} required autoComplete="nickname" /></label>
           {error && <p className="alert alert--error" role="alert">{error}</p>}
-          <button className="primary-button" disabled={busy} type="submit">{busy ? '参加中…' : '参加する'}</button>
+          <Button disabled={busy} type="submit">{busy ? '参加中…' : '参加する'}</Button>
         </form>
       </section>
     </main>

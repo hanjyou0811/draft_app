@@ -15,7 +15,7 @@ function Header() {
         <img className="brand-mark" src="/logo.svg" width="44" height="44" alt="" />
         <span>DRAFT<br /><strong>ROOM</strong></span>
       </a>
-      <p>みんなで決める、リアルタイムドラフト</p>
+      <p>ブラウザで遊べるドラフト会議</p>
     </header>
   );
 }
