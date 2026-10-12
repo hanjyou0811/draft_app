@@ -5,6 +5,7 @@ import { api, ApiError, canPersistCredentials, saveCredentials } from '../api.js
 import lotteryImage from '../../baseball_draft_kuji.png';
 import resultImage from '../../baseball_draft_kekka.png';
 import '../hero-lottery.css';
+import { Button } from './ui/Button.js';
 
 export function CreateRoom({ onCreated }: {
   readonly onCreated: (credentials: Credentials, persisted: boolean) => void;
@@ -70,7 +71,7 @@ export function CreateRoom({ onCreated }: {
           <p className="field-note"><span>候補 {candidateCount}人</span><span>最大500人</span></p>
           <label>各チームの獲得人数<input value={teamSize} onChange={(event) => setTeamSize(event.target.value)} type="number" min="1" max="50" required /></label>
           {error && <p className="alert alert--error" role="alert">{error}</p>}
-          <button className="primary-button" disabled={busy} type="submit">{busy ? '作成中…' : '会議を作成'}</button>
+          <Button disabled={busy} type="submit">{busy ? '作成中…' : '会議を作成'}</Button>
         </form>
       </section>
     </main>
