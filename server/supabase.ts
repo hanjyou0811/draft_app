@@ -1,5 +1,5 @@
 import type { Room } from '../shared/types.js';
-import { RepositoryConflictError, type RoomRepository } from './repository.js';
+import { RepositoryConflictError, type RoomRepository, type StoredTopic } from './repository.js';
 
 interface RoomRow { id: string; version: number; storage_version: number; aggregate: Room }
 
@@ -10,12 +10,12 @@ export class SupabaseRoomRepository implements RoomRepository {
     this.#endpoint = new URL('/rest/v1/draft_rooms', url).toString();
   }
 
-  async #request(query: URLSearchParams, method = 'GET', body?: RoomRow): Promise<Response> {
+  async #request(query: URLSearchParams, method = 'GET', body?: unknown, endpoint = this.#endpoint): Promise<Response> {
     const headers: Record<string, string> = { apikey: this.key, 'content-type': 'application/json' };
     // Legacy service_role keys are JWTs; new secret keys go only in apikey.
     if (!this.key.startsWith('sb_secret_')) headers.authorization = `Bearer ${this.key}`;
     if (method === 'PATCH') headers.prefer = 'return=representation';
-    const response = await this.fetcher(`${this.#endpoint}?${query}`, {
+    const response = await this.fetcher(`${endpoint}?${query}`, {
       method, headers, signal: AbortSignal.timeout(8_000),
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
@@ -25,6 +25,39 @@ export class SupabaseRoomRepository implements RoomRepository {
       throw new Error(`Supabase request failed (${response.status})`);
     }
     return response;
+  }
+
+  #topic(row: Record<string, unknown>): StoredTopic {
+    return { id: row.id as string, title: row.title as string, candidates: row.candidates as string[], isPublic: row.is_public as boolean, createdAt: row.created_at as string, ownerHash: row.owner_hash as string };
+  }
+
+  #topicsEndpoint(): string { return this.#endpoint.replace(/draft_rooms$/u, 'draft_topics'); }
+
+  async createTopic(topic: StoredTopic): Promise<void> {
+    await this.#request(new URLSearchParams(), 'POST', { id: topic.id, title: topic.title, candidates: topic.candidates, is_public: topic.isPublic, created_at: topic.createdAt, owner_hash: topic.ownerHash }, this.#topicsEndpoint());
+  }
+
+  async getTopic(id: string): Promise<StoredTopic | undefined> {
+    const response = await this.#request(new URLSearchParams({ id: `eq.${id}`, select: '*', limit: '1' }), 'GET', undefined, this.#topicsEndpoint());
+    const [row] = await response.json() as Record<string, unknown>[];
+    return row ? this.#topic(row) : undefined;
+  }
+
+  async listTopics(ownerHash?: string): Promise<StoredTopic[]> {
+    const query = new URLSearchParams({ select: '*', order: 'created_at.desc,id.asc' });
+    if (ownerHash) query.set('or', `(is_public.eq.true,owner_hash.eq.${ownerHash})`);
+    else query.set('is_public', 'eq.true');
+    const pageSize = 500;
+    const topics: StoredTopic[] = [];
+    query.set('limit', String(pageSize));
+    for (let offset = 0; ; ) {
+      query.set('offset', String(offset));
+      const response = await this.#request(query, 'GET', undefined, this.#topicsEndpoint());
+      const rows = await response.json() as Record<string, unknown>[];
+      topics.push(...rows.map(row => this.#topic(row)));
+      if (rows.length < pageSize) return topics;
+      offset += rows.length;
+    }
   }
 
   async get(id: string): Promise<Room | undefined> {

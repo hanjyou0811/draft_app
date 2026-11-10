@@ -87,14 +87,25 @@ export async function routeApi(
   service: DraftService,
   pathname: string,
 ): Promise<boolean> {
+  const suppliedOwner = request.headers['x-topic-owner'];
+  if (suppliedOwner !== undefined && typeof suppliedOwner !== 'string') throw new ServiceError('INVALID_TOPIC_OWNER');
+  if (pathname === '/api/topics' && request.method === 'GET') {
+    sendJson(response, 200, await service.listTopics(suppliedOwner));
+    return true;
+  }
+  if (pathname === '/api/topics' && request.method === 'POST') {
+    const body = await readJson(request);
+    if (body.isPublic !== undefined && typeof body.isPublic !== 'boolean') throw new ServiceError('INVALID_TOPIC');
+    sendJson(response, 201, await service.createTopic({ title: requireString(body, 'title'), names: requireString(body, 'names'), ...(body.isPublic === undefined ? {} : { isPublic: body.isPublic as boolean }) }, suppliedOwner));
+    return true;
+  }
   if (request.method === 'POST' && pathname === '/api/rooms') {
     const body = await readJson(request);
     const credentials = await service.createRoom({
       name: requireString(body, 'name'),
-      names: requireString(body, 'names'),
-      ...(body.topic === undefined ? {} : { topic: requireString(body, 'topic') }),
+      ...(body.topicId !== undefined ? { topicId: requireString(body, 'topicId') } : { names: requireString(body, 'names'), ...(body.topic === undefined ? {} : { topic: requireString(body, 'topic') }) }),
       teamSize: requireNumber(body, 'teamSize'),
-    });
+    }, suppliedOwner);
     sendJson(response, 201, credentials);
     return true;
   }

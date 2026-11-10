@@ -94,3 +94,13 @@ export interface Credentials {
   readonly roomId: string;
   readonly token: string;
 }
+
+/** Reusable topic visible to the caller; never includes the owner credential/hash. */
+export interface SavedTopic {
+  readonly id: string;
+  readonly title: string;
+  readonly candidates: readonly string[];
+  readonly isPublic: boolean;
+  readonly createdAt: string;
+  readonly isOwner: boolean;
+}
