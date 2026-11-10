@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto';
 
 import {
   createRoom as createRoomAggregate,
@@ -10,7 +10,7 @@ import {
 import type { Credentials, Room, RoomView, SavedTopic } from '../shared/types.js';
 import { RepositoryConflictError, type RoomRepository, type StoredTopic } from './repository.js';
 
-export type ServiceErrorCode = 'ROOM_NOT_FOUND' | 'TOPIC_NOT_FOUND' | 'INVALID_TOPIC' | 'INVALID_TOPIC_OWNER' | 'UNAUTHORIZED';
+export type ServiceErrorCode = 'ROOM_NOT_FOUND' | 'TOPIC_NOT_FOUND' | 'INVALID_TOPIC' | 'INVALID_TOPIC_OWNER' | 'UNAUTHORIZED' | 'INVITATION_REQUIRED' | 'INVITATION_NOT_FOUND' | 'INVITATION_HOST_ONLY' | 'INVITATION_NOT_WAITING';
 
 export class ServiceError extends Error {
   constructor(readonly code: ServiceErrorCode) {
@@ -28,6 +28,7 @@ export interface CreateRoomRequest {
 }
 
 export interface JoinRoomRequest {
+  readonly inviteKey?: string;
   readonly name: string;
 }
 
@@ -132,7 +133,7 @@ export class DraftService {
         ...(input.topic !== undefined ? { topic: input.topic } : {}),
       });
       try {
-        await this.#enqueue(roomId, () => this.repository.create(room));
+        await this.#enqueue(roomId, () => this.repository.create({ ...room, invitation: this.#newInvitation(roomId, token) }));
         return { roomId, token };
       } catch (error) {
         if (!(error instanceof RepositoryConflictError)) throw error;
@@ -140,9 +141,75 @@ export class DraftService {
     }
   }
 
-  async getInfo(roomId: string): Promise<RoomInfo> {
+  #secret(roomId: string, token: string, nonce: string): string {
+    return createHmac('sha256', token).update(JSON.stringify(['draft-room/invitation/v1', roomId, nonce])).digest('hex');
+  }
+
+  #newInvitation(roomId: string, token: string): NonNullable<Room['invitation']> {
+    const nonce = randomBytes(32).toString('hex');
+    return { nonce, keyHash: hashToken(this.#secret(roomId, token, nonce)) };
+  }
+
+  #parseInvitation(inviteKey: string): { roomId: string; secret: string } {
+    if (typeof inviteKey !== 'string' || inviteKey.length > 400) throw new ServiceError('INVITATION_NOT_FOUND');
+    const separator = inviteKey.lastIndexOf('.');
+    try {
+      const roomId = decodeURIComponent(inviteKey.slice(0, separator));
+      const secret = inviteKey.slice(separator + 1);
+      if (separator < 1 || !/^[A-Za-z0-9_-]{1,100}$/u.test(roomId) || !/^[0-9a-f]{64}$/u.test(secret)) throw new Error();
+      return { roomId, secret };
+    } catch { throw new ServiceError('INVITATION_NOT_FOUND'); }
+  }
+
+  #checkInvitation(room: Room | undefined, inviteKey: string, roomId: string): asserts room is Room {
+    const parsed = this.#parseInvitation(inviteKey);
+    const stored = Buffer.from(room?.invitation?.keyHash ?? '', 'hex');
+    const supplied = Buffer.from(hashToken(parsed.secret), 'hex');
+    if (!room || parsed.roomId !== roomId || stored.length !== supplied.length || !timingSafeEqual(stored, supplied)) {
+      throw new ServiceError('INVITATION_NOT_FOUND');
+    }
+  }
+
+  async getInvitation(credentials: Credentials): Promise<{ inviteKey: string }> {
+    return this.#invitation(credentials, false);
+  }
+
+  async rotateInvitation(credentials: Credentials): Promise<{ inviteKey: string }> {
+    return this.#invitation(credentials, true);
+  }
+
+  async #invitation(credentials: Credentials, rotate: boolean): Promise<{ inviteKey: string }> {
+    return this.#enqueue(credentials.roomId, () => this.#retryConflict(async () => {
+      const room = await this.#requireRoom(credentials.roomId);
+      const memberId = this.#authenticate(room, credentials.token);
+      if (!room.members.some(member => member.id === memberId && member.isHost)) throw new ServiceError('INVITATION_HOST_ONLY');
+      if (room.status !== 'waiting') throw new ServiceError('INVITATION_NOT_WAITING');
+      let invitation = room.invitation;
+      if (rotate || !invitation) {
+        invitation = this.#newInvitation(room.id, credentials.token);
+        const next = { ...room, invitation, version: room.version + 1 };
+        await this.repository.save(next, room.version);
+        this.#notify(next);
+      }
+      return { inviteKey: encodeURIComponent(room.id) + '.' + this.#secret(room.id, credentials.token, invitation.nonce) };
+    }));
+  }
+
+  async getInvitationInfo(inviteKey: string): Promise<RoomInfo & { roomId: string }> {
+    const { roomId } = this.#parseInvitation(inviteKey);
+    return { ...await this.getInfo(roomId, inviteKey), roomId };
+  }
+
+  async joinInvitation(inviteKey: string, input: { name: string }): Promise<Credentials> {
+    const { roomId } = this.#parseInvitation(inviteKey);
+    return this.joinRoom(roomId, { ...input, inviteKey });
+  }
+
+  async getInfo(roomId: string, inviteKey?: string): Promise<RoomInfo> {
+    if (inviteKey === undefined) throw new ServiceError('INVITATION_REQUIRED');
     return this.#enqueue(roomId, async () => {
-      const room = await this.#requireRoom(roomId);
+      const room = await this.repository.get(roomId);
+      this.#checkInvitation(room, inviteKey, roomId);
       return {
         status: room.status,
         ...(room.topic ? { topic: room.topic } : {}),
@@ -154,7 +221,9 @@ export class DraftService {
 
   async joinRoom(roomId: string, input: JoinRoomRequest): Promise<Credentials> {
     return this.#enqueue(roomId, () => this.#retryConflict(async () => {
-      const room = await this.#requireRoom(roomId);
+      if (input.inviteKey === undefined) throw new ServiceError('INVITATION_REQUIRED');
+      const room = await this.repository.get(roomId);
+      this.#checkInvitation(room, input.inviteKey, roomId);
       const token = this.#createToken();
       const next = joinRoomAggregate(room, {
         id: this.#createId(),

@@ -6,6 +6,7 @@
   "functions": { "api/index.ts": { "maxDuration": 60 } },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index?route=:path*" },
-    { "source": "/room/:path*", "destination": "/index.html" }
+    { "source": "/room/:path*", "destination": "/index.html" },
+    { "source": "/invite/:path*", "destination": "/index.html" }
   ]
 }

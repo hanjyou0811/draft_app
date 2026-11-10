@@ -30,6 +30,8 @@ export interface Outcome extends RoundKey {
 }
 
 export interface Room {
+  /** Server-only invitation verifier. Never included in RoomView. */
+  readonly invitation?: { readonly nonce: string; readonly keyHash: string };
   readonly topic?: string;
   readonly id: string;
   readonly status: RoomStatus;
@@ -103,4 +105,8 @@ export interface SavedTopic {
   readonly isPublic: boolean;
   readonly createdAt: string;
   readonly isOwner: boolean;
+}
+
+export interface InvitationLink {
+  readonly inviteKey: string;
 }

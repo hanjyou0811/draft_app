@@ -110,9 +110,24 @@ export async function routeApi(
     return true;
   }
 
+  if (request.method === 'POST' && (pathname === '/api/invitations/resolve' || pathname === '/api/invitations/join')) {
+    const body = await readJson(request);
+    const inviteKey = typeof body.inviteKey === 'string' ? body.inviteKey : '';
+    if (pathname.endsWith('/resolve')) sendJson(response, 200, await service.getInvitationInfo(inviteKey));
+    else sendJson(response, 201, await service.joinInvitation(inviteKey, { name: requireString(body, 'name') }));
+    return true;
+  }
+
+  const invitationMatch = /^\/api\/rooms\/([^/]+)\/invitation$/u.exec(pathname);
+  if (invitationMatch && (request.method === 'GET' || request.method === 'POST')) {
+    const credentials = { roomId: roomIdFrom(invitationMatch), token: bearerToken(request) };
+    sendJson(response, 200, await (request.method === 'GET' ? service.getInvitation(credentials) : service.rotateInvitation(credentials)));
+    return true;
+  }
+
   const infoMatch = /^\/api\/rooms\/([^/]+)\/info$/u.exec(pathname);
   if (request.method === 'GET' && infoMatch !== null) {
-    sendJson(response, 200, await service.getInfo(roomIdFrom(infoMatch)));
+    sendJson(response, 200, await service.getInfo(roomIdFrom(infoMatch), typeof request.headers['x-invite-key'] === 'string' ? request.headers['x-invite-key'] : undefined));
     return true;
   }
 
@@ -122,6 +137,7 @@ export async function routeApi(
     const roomId = roomIdFrom(joinMatch);
     sendJson(response, 201, await service.joinRoom(roomId, {
       name: requireString(body, 'name'),
+      ...(body.inviteKey === undefined ? {} : { inviteKey: typeof body.inviteKey === 'string' ? body.inviteKey : '' }),
     }));
     return true;
   }

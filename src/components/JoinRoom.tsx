@@ -1,28 +1,38 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import type { Credentials } from '../../shared/types.js';
-import { api, ApiError, canPersistCredentials, saveCredentials, type RoomInfo } from '../api.js';
+import { api, ApiError, canPersistCredentials, saveCredentials, readCredentialState, type InvitationInfo } from '../api.js';
 import { Button } from './ui/Button.js';
 
-export function JoinRoom({ roomId, onJoined }: {
-  readonly roomId: string;
+export function JoinRoom({ inviteKey, onJoined }: {
+  readonly inviteKey: string;
   readonly onJoined: (credentials: Credentials, persisted: boolean) => void;
 }) {
-  const [info, setInfo] = useState<RoomInfo>();
+  const [info, setInfo] = useState<InvitationInfo>();
   const [name, setName] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const onJoinedRef = useRef(onJoined);
+  onJoinedRef.current = onJoined;
 
   useEffect(() => {
     let active = true;
-    api.getInfo(roomId).then((value) => active && setInfo(value)).catch((cause: unknown) => {
+    setInfo(undefined);
+    setError(undefined);
+    api.getInvitationInfo(inviteKey).then((value) => {
+      if (!active) return;
+      const existing = readCredentialState(value.roomId);
+      if (existing) onJoinedRef.current(existing.credentials, existing.persisted);
+      else setInfo(value);
+    }).catch((cause: unknown) => {
       if (active) setError(cause instanceof ApiError ? cause.message : '会議を確認できませんでした。');
     });
     return () => { active = false; };
-  }, [roomId]);
+  }, [inviteKey]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (busy || info === undefined) return;
     setError(undefined);
     if (!canPersistCredentials()) {
       setError('このブラウザーでは参加情報を保存できません。ブラウザーの保存設定を確認してください。');
@@ -30,7 +40,7 @@ export function JoinRoom({ roomId, onJoined }: {
     }
     setBusy(true);
     try {
-      const credentials = await api.joinRoom(roomId, name);
+      const credentials = await api.joinInvitation(inviteKey, name);
       onJoined(credentials, saveCredentials(credentials));
     } catch (cause) {
       setError(cause instanceof ApiError ? cause.message : '参加できませんでした。');
@@ -38,7 +48,7 @@ export function JoinRoom({ roomId, onJoined }: {
     }
   };
 
-  if (error && info === undefined) return <main className="center-card"><section className="paper-card"><h1>招待URLを確認</h1><p className="alert alert--error" role="alert">{error}</p><a href="/">新しい会議を作る</a></section></main>;
+  if (error && info === undefined) return <main className="center-card"><section className="paper-card"><h1>招待リンクを確認</h1><p className="alert alert--error" role="alert">{error}</p><a href="/">新しい会議を作る</a></section></main>;
   if (info === undefined) return <main className="loading" role="status">会議を確認しています…</main>;
   if (info.status !== 'waiting') return <main className="center-card"><section className="paper-card"><h1>この会議は開始済みです</h1><p>この端末には参加情報がありません。参加済みの端末から開いてください。</p><a href="/">新しい会議を作る</a></section></main>;
 
