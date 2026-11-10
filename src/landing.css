@@ -1,0 +1,133 @@
+@font-face {
+  font-family: "Dela Gothic One";
+  src: url("/fonts/dela-gothic-one-landing.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.draft-home {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 72px 32px 112px;
+  background: #fff7e8;
+}
+
+.draft-home__content {
+  width: min(100%, 1140px);
+  display: grid;
+  gap: clamp(36px, 7.6vw, 116px);
+}
+
+.draft-home__title {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0 20px;
+  color: #ff5c35;
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: clamp(76px, 20.5vw, 310px);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: -.09em;
+  -webkit-text-stroke: .045em #171717;
+  paint-order: stroke fill;
+  filter: drop-shadow(10px 14px 0 #171717);
+}
+
+.draft-home__title span { display: inline-block; }
+.draft-home__title span:nth-child(1) { transform: rotate(-5deg) scaleY(1.3); }
+.draft-home__title span:nth-child(2) { transform: translateY(6px) rotate(3deg) scaleY(1.3); }
+.draft-home__title span:nth-child(3) { transform: rotate(-4deg) scaleY(1.3); }
+.draft-home__title span:nth-child(4) { transform: rotate(5deg) scaleY(1.3); }
+
+.draft-home__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.draft-home__button {
+  min-width: 0;
+  min-height: clamp(84px, 12vw, 182px);
+  padding: 18px 12px 26px;
+  border: 6px solid #171717;
+  border-radius: clamp(16px, 2.4vw, 32px);
+  color: #171717;
+  box-shadow: 8px 12px 0 #171717;
+  font-family: "Dela Gothic One", sans-serif;
+  font-size: clamp(20px, 5.3vw, 80px);
+  font-weight: 400;
+  line-height: 1.3;
+  white-space: nowrap;
+  transition: transform .15s, box-shadow .15s;
+}
+
+.draft-home__button--topic { background: #ffd84d; }
+.draft-home__button--room { background: #fffdf8; }
+.draft-home__button:hover { transform: translate(-3px, -3px); box-shadow: 11px 15px 0 #171717; }
+.draft-home__button:active { transform: translate(6px, 8px); box-shadow: 2px 4px 0 #171717; }
+.draft-home__button:focus-visible, .draft-home__github:focus-visible { outline: 4px solid #1b63ff; outline-offset: 8px; }
+
+.draft-home__github {
+  position: absolute;
+  right: clamp(20px, 2.4vw, 38px);
+  bottom: clamp(20px, 2.4vw, 38px);
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  transition: transform .15s;
+}
+.draft-home__github img { display: block; width: 56px; height: 56px; }
+.draft-home__github:hover { transform: rotate(-8deg) scale(1.08); }
+
+.creation-dialog {
+  width: min(560px, calc(100% - 40px));
+  max-height: calc(100svh - 48px);
+  padding: 0;
+  color: var(--on-surface);
+  background: #fffdf8;
+  border: 3px solid #171717;
+  border-radius: 16px;
+  box-shadow: 9px 9px 0 #171717;
+  overscroll-behavior: contain;
+}
+.creation-dialog::backdrop { background: rgb(23 23 23 / 42%); }
+body:has(.creation-dialog[open]) { overflow: hidden; }
+.creation-dialog__content { position: relative; padding: 36px; }
+.creation-dialog h2 { margin: 0; padding-right: 28px; font-size: clamp(23px, 4vw, 28px); line-height: 1.4; }
+.creation-dialog .step-label { padding-right: 32px; color: #ad3518; }
+.creation-dialog .primary-button { width: 100%; }
+.creation-dialog__close {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid #171717;
+  border-radius: 50%;
+  background: #ffd84d;
+  color: #171717;
+  font: 30px/1 sans-serif;
+}
+.creation-dialog__close:hover:not(:disabled) { background: #ff5c35; }
+.creation-dialog__close:disabled { opacity: .5; }
+
+@media (max-width: 600px) {
+  .draft-home { padding: 56px 22px 104px; }
+  .draft-home__content { gap: 42px; }
+  .draft-home__title { padding: 0; font-size: 21vw; filter: drop-shadow(5px 7px 0 #171717); }
+  .draft-home__actions { gap: 12px; }
+  .draft-home__button { min-height: 80px; padding: 18px 5px; border-width: 3px; font-size: clamp(17px, 5.4vw, 28px); box-shadow: 4px 6px 0 #171717; }
+  .draft-home__button:hover { transform: translate(-2px, -2px); box-shadow: 6px 8px 0 #171717; }
+  .draft-home__button:active { transform: translate(3px, 4px); box-shadow: 1px 2px 0 #171717; }
+  .draft-home__github { width: 48px; height: 48px; }
+  .draft-home__github img { width: 40px; height: 40px; }
+  .creation-dialog__content { padding: 28px 20px; }
+  .creation-dialog { max-height: calc(100svh - 40px); }
+}
+

@@ -2,6 +2,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
 
 async function createRoom(page: Page, hostName = '主催'): Promise<void> {
   await page.goto('/');
+  await page.getByRole('button', { name: 'ルーム作成', exact: true }).click();
   await page.getByLabel('表示名').fill(hostName);
   await page.getByLabel('候補の名前').fill('青木\n伊藤\n上田\n遠藤');
   await page.getByLabel('各チームの獲得人数').fill('1');
@@ -120,6 +121,7 @@ test('参加情報を保存できないブラウザーでは送信前に停止�
     if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/rooms') createRequests += 1;
   });
   await page.goto('/');
+  await page.getByRole('button', { name: 'ルーム作成', exact: true }).click();
   await page.getByLabel('表示名').fill('保存できない主催');
   await page.getByLabel('候補の名前').fill('青木\n伊藤');
   await page.getByRole('button', { name: '会議を作成' }).click();
@@ -171,6 +173,7 @@ test('作成成功後の保存失敗でも履歴移動後に認証と警告を�
     if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/rooms') createRequests += 1;
   });
   await page.goto('/');
+  await page.getByRole('button', { name: 'ルーム作成', exact: true }).click();
   await page.getByLabel('表示名').fill('履歴主催');
   await page.getByLabel('候補の名前').fill('青木\n伊藤');
   await page.getByRole('button', { name: '会議を作成' }).click();
@@ -179,7 +182,7 @@ test('作成成功後の保存失敗でも履歴移動後に認証と警告を�
   await expect(teamCard(page, '履歴主催')).toHaveClass(/team-card--own/u);
 
   await page.goBack();
-  await expect(page.getByRole('button', { name: '会議を作成' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'ルーム作成', exact: true })).toBeVisible();
   await page.goForward();
   await expect(page.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
   await expect(page.getByText('参加情報を永続保存できませんでした。')).toBeVisible();
