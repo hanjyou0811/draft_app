@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent } from 'react';
 import type { SavedTopic } from '../../shared/types.js';
 import { api, ApiError } from '../api.js';
 import { Button } from './ui/Button.js';
+import { PublicTopicCopy } from './PublicTopicCopy.js';
 
 export function CreateTopicForm({ onSaved, onUseTopic, onBusyChange }: {
   readonly onSaved: (topic: SavedTopic) => void;
@@ -11,6 +12,8 @@ export function CreateTopicForm({ onSaved, onUseTopic, onBusyChange }: {
   const [title, setTitle] = useState('');
   const [names, setNames] = useState('');
   const [isPublic, setIsPublic] = useState(false);
+  const namesRef = useRef<HTMLTextAreaElement>(null);
+  const [copyNotice, setCopyNotice] = useState('');
   const [saved, setSaved] = useState<SavedTopic>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -46,9 +49,17 @@ export function CreateTopicForm({ onSaved, onUseTopic, onBusyChange }: {
   return (
     <form onSubmit={event => void submit(event)}>
       <fieldset className="creation-fields" disabled={busy}>
+        <PublicTopicCopy onCopy={source => {
+          setNames(source.candidates.join('\n'));
+          setTitle(current => current.trim() ? current : source.title);
+          setCopyNotice(`「${source.title}」の候補 ${source.candidates.length}件をコピーしました。`);
+          setError(undefined);
+          namesRef.current?.focus();
+        }} />
+        {copyNotice && <p className="topic-copy__notice" role="status">{copyNotice}</p>}
         <label>お題名<input data-initial-focus value={title} onChange={event => setTitle(event.target.value)} placeholder="例：夏に食べたいものドラフト" maxLength={100} required aria-describedby="topic-name-note" /></label>
         <p id="topic-name-note" className="topic-note">お題名は100文字まで。</p>
-        <label>候補の名前<textarea value={names} onChange={event => setNames(event.target.value)} placeholder={'1行に1つずつ入力\n例：そうめん\nかき氷'} rows={6} required aria-describedby="candidate-count" /></label>
+        <label>候補の名前<textarea ref={namesRef} value={names} onChange={event => setNames(event.target.value)} placeholder={'1行に1つずつ入力\n例：そうめん\nかき氷'} rows={6} required aria-describedby="candidate-count" /></label>
         <p id="candidate-count" className="field-note"><span>候補 {candidateCount}項目</span><span>最大500項目</span></p>
         <div className="topic-visibility">
           <label className="topic-visibility__label"><input type="checkbox" checked={isPublic} onChange={event => setIsPublic(event.target.checked)} aria-describedby="topic-visibility-note" />公開する</label>
