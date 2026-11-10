@@ -42,7 +42,7 @@ test('待機中は招待URLを隠し、キーボードでタブを切り替え�
   await expect(page.getByRole('region', { name: '候補一覧' })).toContainText('候補 060');
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: /招待URL/ })).toBeFocused();
-  await expect(page.getByRole('textbox', { name: '招待URL', exact: true })).toHaveValue(/\/invite\//u);
+  await expect(page.getByRole('textbox', { name: '招待URL', exact: true })).toHaveValue(/^\*+$/u);
   await page.keyboard.press('Home');
   await expect(page.getByRole('tab', { name: /参加者/ })).toBeFocused();
   await expect(page.locator('#invite-url')).toHaveCount(0);

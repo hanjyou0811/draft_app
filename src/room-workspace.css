@@ -190,3 +190,7 @@
 .waiting-heading h1, .draft-board__heading h1, .draft-picker > h2, .room-primary-button { font-family: "Dela Gothic One", sans-serif; font-weight: 400; }
 
 .draft-content--completed .draft-picker > h2 { font-family: inherit; font-weight: 800; }
+
+.invitation-link-field { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; margin-top: 7px; }
+.invitation-link-field input { min-width: 0; margin: 0; font-size: 13px; }
+.invitation-link-field button { white-space: nowrap; }

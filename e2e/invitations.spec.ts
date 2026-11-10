@@ -27,6 +27,8 @@ test('ルームURLだけでは参加できず、招待リンクの参加後は�
     expect(blocked.status()).toBe(403);
     await host.getByRole('tab', { name: '招待URL', exact: true }).click();
     const link = host.getByRole('textbox', { name: '招待URL', exact: true });
+    await expect(link).toHaveValue(/^\*+$/u);
+    await host.getByRole('button', { name: '表示する', exact: true }).click();
     await expect(link).toHaveValue(/\/invite\//u);
     const inviteUrl = await link.inputValue();
     expect(inviteUrl).not.toBe(roomUrl);
@@ -53,6 +55,8 @@ test('再発行で古い招待は無効になり、参加済みの人はその�
   const roomUrl = host.url();
   await host.getByRole('tab', { name: '招待URL', exact: true }).click();
   const link = host.getByRole('textbox', { name: '招待URL', exact: true });
+  await expect(link).toHaveValue(/^\*+$/u);
+  await host.getByRole('button', { name: '表示する', exact: true }).click();
   await expect(link).toHaveValue(/\/invite\//u);
   const oldUrl = await link.inputValue();
   const joinedContext = await browser.newContext();
@@ -65,6 +69,8 @@ test('再発行で古い招待は無効になり、参加済みの人はその�
     await expect(joined).toHaveURL(roomUrl);
     await host.getByRole('button', { name: '招待リンクを再発行', exact: true }).click();
     await expect(link).not.toHaveValue(oldUrl);
+    await expect(link).toHaveValue(/^\*+$/u);
+    await host.getByRole('button', { name: '表示する', exact: true }).click();
     await expect(link).toHaveValue(/\/invite\//u);
     const newUrl = await link.inputValue();
     const newcomer = await newcomerContext.newPage();
@@ -85,6 +91,8 @@ test('再発行の応答を失ったら古いリンクを隠し、読み直し�
   const credentials = await createHost(page);
   await page.getByRole('tab', { name: '招待URL', exact: true }).click();
   const link = page.getByRole('textbox', { name: '招待URL', exact: true });
+  await expect(link).toHaveValue(/^\*+$/u);
+  await page.getByRole('button', { name: '表示する', exact: true }).click();
   await expect(link).toHaveValue(/\/invite\//u);
   const oldUrl = await link.inputValue();
   const path = `**/api/rooms/${credentials.roomId}/invitation`;
@@ -98,7 +106,44 @@ test('再発行の応答を失ったら古いリンクを隠し、読み直し�
   await expect(page.locator('#invite-url')).toHaveCount(0);
   await page.unroute(path);
   await page.getByRole('button', { name: '再読み込み', exact: true }).click();
+  await expect(link).toHaveValue(/^\*+$/u);
+  await page.getByRole('button', { name: '表示する', exact: true }).click();
   await expect(link).toHaveValue(/\/invite\//u);
   await expect(link).not.toHaveValue(oldUrl);
 });
 
+test('招待URLは伏せ字で開き、非表示のままコピーでき、表示・再発行・タブ再表示で隠せる', async ({ page }) => {
+  await createHost(page);
+  await page.getByRole('tab', { name: '招待URL', exact: true }).click();
+  const input = page.getByRole('textbox', { name: '招待URL', exact: true });
+  await expect(input).toHaveValue(/^\*+$/u);
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (value: string) => { (window as Window & { copiedInvite?: string }).copiedInvite = value; } } }));
+  await page.getByRole('button', { name: 'URLをコピー', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('コピーしました');
+  const copied = await page.evaluate(() => (window as Window & { copiedInvite?: string }).copiedInvite);
+  expect(copied).toMatch(/\/invite\//u);
+  await expect(input).toHaveValue(/^\*+$/u);
+  await page.getByRole('button', { name: '表示する', exact: true }).click();
+  await expect(input).toHaveValue(copied!);
+  await page.getByRole('button', { name: '非表示にする', exact: true }).click();
+  await expect(input).toHaveValue(/^\*+$/u);
+  await page.getByRole('button', { name: '表示する', exact: true }).click();
+  await page.getByRole('tab', { name: /参加者/ }).click();
+  await page.getByRole('tab', { name: '招待URL', exact: true }).click();
+  await expect(input).toHaveValue(/^\*+$/u);
+  await page.getByRole('button', { name: '表示する', exact: true }).click();
+  await page.getByRole('button', { name: '招待リンクを再発行', exact: true }).click();
+  await expect(input).toHaveValue(/^\*+$/u);
+  await page.getByRole('button', { name: '表示する', exact: true }).click();
+  await expect(input).not.toHaveValue(copied!);
+});
+
+test('非表示中にコピーに失敗してもURLを自動表示しない', async ({ page }) => {
+  await createHost(page);
+  await page.getByRole('tab', { name: '招待URL', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: '招待URL', exact: true })).toHaveValue(/^\*+$/u);
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async () => { throw new Error('clipboard denied'); } } }));
+  await page.getByRole('button', { name: 'URLをコピー', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('コピーできませんでした');
+  await expect(page.getByRole('textbox', { name: '招待URL', exact: true })).toHaveValue(/^\*+$/u);
+});

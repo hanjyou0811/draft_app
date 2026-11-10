@@ -13,6 +13,7 @@ export function InvitationPanel({ credentials, version }: InvitationPanelProps) 
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState('');
   const [copyStatus, setCopyStatus] = useState('');
+  const [revealed, setRevealed] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const mounted = useRef(false);
@@ -34,6 +35,7 @@ export function InvitationPanel({ credentials, version }: InvitationPanelProps) 
     const request = ++serial.current;
     rotating.current = rotate;
     setInviteKey(undefined);
+    setRevealed(false);
     setCopyStatus('');
     setError('');
     setBusy(true);
@@ -70,9 +72,13 @@ export function InvitationPanel({ credentials, version }: InvitationPanelProps) 
       if (mounted.current && request === serial.current) setCopyStatus('コピーしました');
     } catch {
       if (!mounted.current || request !== serial.current) return;
-      inputRef.current?.focus();
-      inputRef.current?.select();
-      setCopyStatus('URLを選択しました。手動でコピーしてください。');
+      if (revealed) {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+        setCopyStatus('URLを選択しました。手動でコピーしてください。');
+      } else {
+        setCopyStatus('コピーできませんでした。「表示する」でURLを確認して手動でコピーしてください。');
+      }
     }
   };
 
@@ -84,7 +90,11 @@ export function InvitationPanel({ credentials, version }: InvitationPanelProps) 
       {error && <><p role="alert">{error}</p><button className="secondary-button" type="button" onClick={() => void load()}>再読み込み</button></>}
       {inviteKey && <>
         <label htmlFor="invite-url">招待URL</label>
-        <input ref={inputRef} id="invite-url" value={inviteUrl} readOnly onFocus={event => event.currentTarget.select()} />
+        <div className="invitation-link-field">
+          <input ref={inputRef} id="invite-url" value={revealed ? inviteUrl : '****************'} readOnly autoComplete="off" spellCheck={false} aria-describedby="invite-visibility" onFocus={(event) => { if (revealed) event.currentTarget.select(); }} />
+          <button className="room-text-button" type="button" aria-controls="invite-url" aria-pressed={revealed} onClick={() => setRevealed(value => !value)}>{revealed ? '非表示にする' : '表示する'}</button>
+        </div>
+        <p id="invite-visibility">{revealed ? '招待URLを表示しています。' : '招待URLは非表示です。そのままコピーできます。'}</p>
         <button className="secondary-button" type="button" onClick={() => void copy()}>URLをコピー</button>
         <p role="status">{copyStatus}</p>
       </>}
