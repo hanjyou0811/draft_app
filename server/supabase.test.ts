@@ -27,6 +27,11 @@ test('Supabase repository stores and reads rooms and refuses stale writes', asyn
   const credentials = await service.createRoom({ name: 'Host', names: 'A\nB', teamSize: 1 });
   const original = (await repo.get(credentials.roomId))!;
   assert.equal(original.members[0]?.name, 'Host');
+  const invitation = await service.getInvitation(credentials);
+  assert.deepEqual(await new DraftService(repo).getInvitation(credentials), invitation);
+  assert.equal(typeof original.invitation?.nonce, 'string');
+  assert.equal(typeof original.invitation?.keyHash, 'string');
+  assert.equal(JSON.stringify(row).includes(invitation.inviteKey.split('.').at(-1)!), false);
   await assert.rejects(repo.create(original), RepositoryConflictError);
   await repo.save({ ...original, version: original.version + 1 }, original.version);
   await assert.rejects(repo.save(original, original.version), RepositoryConflictError);

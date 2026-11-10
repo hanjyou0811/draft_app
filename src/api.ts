@@ -1,10 +1,14 @@
-import type { Credentials, RoomStatus, RoomView, SavedTopic } from '../shared/types.js';
+import type { Credentials, RoomStatus, RoomView, SavedTopic, InvitationLink } from '../shared/types.js';
 
 export interface RoomInfo {
   readonly topic?: string;
   readonly status: RoomStatus;
   readonly teamSize: number;
   readonly participantCount: number;
+}
+
+export interface InvitationInfo extends RoomInfo {
+  readonly roomId: string;
 }
 
 export class ApiError extends Error {
@@ -127,11 +131,18 @@ export const api = {
     request<SavedTopic>('/api/topics', { method: 'POST', headers: topicOwnerHeaders(true), body: JSON.stringify(body) }),
   createRoom: (body: { name: string; topicId: string; teamSize: number }) =>
     request<Credentials>('/api/rooms', { method: 'POST', headers: topicOwnerHeaders(), body: JSON.stringify(body) }),
-  getInfo: (roomId: string) => request<RoomInfo>(`/api/rooms/${encodeURIComponent(roomId)}/info`),
-  joinRoom: (roomId: string, name: string) => request<Credentials>(
-    `/api/rooms/${encodeURIComponent(roomId)}/join`,
-    { method: 'POST', body: JSON.stringify({ name }) },
+  getInvitation: ({ roomId, token }: Credentials) => request<InvitationLink>(
+    `/api/rooms/${encodeURIComponent(roomId)}/invitation`, { headers: authorization(token) },
   ),
+  rotateInvitation: ({ roomId, token }: Credentials) => request<InvitationLink>(
+    `/api/rooms/${encodeURIComponent(roomId)}/invitation`, { method: 'POST', headers: authorization(token) },
+  ),
+  getInvitationInfo: (inviteKey: string) => request<InvitationInfo>('/api/invitations/resolve', {
+    method: 'POST', body: JSON.stringify({ inviteKey }),
+  }),
+  joinInvitation: (inviteKey: string, name: string) => request<Credentials>('/api/invitations/join', {
+    method: 'POST', body: JSON.stringify({ inviteKey, name }),
+  }),
   getRoom: ({ roomId, token }: Credentials) => request<RoomView>(
     `/api/rooms/${encodeURIComponent(roomId)}`,
     { headers: authorization(token) },

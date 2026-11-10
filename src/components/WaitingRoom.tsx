@@ -1,11 +1,13 @@
 import { useId, useRef, useState } from 'react';
 
-import type { RoomView } from '../../shared/types.js';
+import type { Credentials, RoomView } from '../../shared/types.js';
 import type { SyncStatus } from '../useRoom.js';
+import { InvitationPanel } from './InvitationPanel.js';
 import { RoomHeader } from './RoomHeader.js';
 
 interface WaitingRoomProps {
   readonly room: RoomView;
+  readonly credentials: Credentials;
   readonly syncStatus: SyncStatus;
   readonly busy: boolean;
   readonly onStart: () => void;
@@ -18,17 +20,10 @@ const tabs = [
 ] as const;
 type WaitingTab = (typeof tabs)[number]['id'];
 
-export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProps) {
+export function WaitingRoom({ room, credentials, syncStatus, busy, onStart }: WaitingRoomProps) {
   const [activeTab, setActiveTab] = useState<WaitingTab>('participants');
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const id = useId();
-  const [copyStatus, setCopyStatus] = useState('');
-  const inviteRef = useRef<HTMLInputElement>(null);
-  const inviteUrl = location.origin + location.pathname;
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(inviteUrl); setCopyStatus('コピーしました'); }
-    catch { inviteRef.current?.focus(); inviteRef.current?.select(); setCopyStatus('URLを選択しました。手動でコピーしてください。'); }
-  };
   const own = room.members.find((member) => member.id === room.ownMemberId);
   const required = room.members.length * room.teamSize;
   const shortage = Math.max(0, required - room.candidates.length);
@@ -92,13 +87,9 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
               </section>
             )}
             {activeTab === 'invite' && (
-              <div className="waiting-invite">
-                <h2>仲間を招待</h2><p>招待URLを共有して、参加者を招待できます。</p>
-                <label htmlFor="invite-url">招待URL</label>
-                <input ref={inviteRef} id="invite-url" value={inviteUrl} readOnly onFocus={event => event.currentTarget.select()} />
-                <button className="secondary-button" type="button" onClick={() => void copy()}>URLをコピー</button>
-                <p role="status">{copyStatus}</p>
-              </div>
+              own?.isHost
+                ? <InvitationPanel credentials={credentials} version={room.version} />
+                : <p>招待リンクは主催者から受け取ってください。</p>
             )}
           </div>
         </div>

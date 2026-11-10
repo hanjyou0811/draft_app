@@ -21,7 +21,17 @@ async function createRoom(page: Page, hostName = '主催'): Promise<void> {
   await expect(page.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
 }
 
-async function joinRoom(browser: Browser, inviteUrl: string, name: string): Promise<Page> {
+async function inviteUrlFor(host: Page): Promise<string> {
+  await host.getByRole('tab', { name: '招待URL', exact: true }).click();
+  const input = host.getByRole('textbox', { name: '招待URL', exact: true });
+  await expect(input).toHaveValue(/\/invite\//u);
+  const inviteUrl = await input.inputValue();
+  await host.getByRole('tab', { name: /参加者/ }).click();
+  return inviteUrl;
+}
+
+async function joinRoom(browser: Browser, host: Page, name: string): Promise<Page> {
+  const inviteUrl = await inviteUrlFor(host);
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(inviteUrl);
@@ -53,7 +63,7 @@ function candidatePreview(page: Page) {
 
 test('二つのブラウザで重複指名、再指名、完成、再読み込み復帰まで進める', async ({ page: host, browser }) => {
   await createRoom(host);
-  const guest = await joinRoom(browser, host.url(), '参加者');
+  const guest = await joinRoom(browser, host, '参加者');
   await expect(host.getByText('参加者', { exact: true }).first()).toBeVisible();
   for (const page of [host, guest]) {
     await page.getByRole('tab', { name: /候補リスト/ }).click();
@@ -94,12 +104,13 @@ test('二つのブラウザで重複指名、再指名、完成、再読み込�
 });
 
 test('無効な招待URLと表示名の重複を日本語で説明する', async ({ page, browser }) => {
-  await page.goto('/room/not-a-room');
-  await expect(page.getByText('会議が見つかりません。')).toBeVisible();
+  await page.goto('/invite/not-a-valid-invitation');
+  await expect(page.getByRole('heading', { name: '招待リンクを確認' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('招待');
   await createRoom(page, '同じ名前');
   const context = await browser.newContext();
   const guest = await context.newPage();
-  await guest.goto(page.url());
+  await guest.goto(await inviteUrlFor(page));
   await guest.getByLabel('表示名').fill('同じ名前');
   await guest.getByRole('button', { name: '参加する' }).click();
   await expect(guest.getByText('同じ表示名の参加者がいます。')).toBeVisible();
@@ -111,7 +122,7 @@ test('切断を表示して再同期し、390pxでも横にはみ出さず提出
   await host.getByRole('tab', { name: /候補リスト/ }).click();
   await expect(candidatePreview(host)).toBeVisible();
   expect(await host.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
-  const guest = await joinRoom(browser, host.url(), 'モバイル参加者');
+  const guest = await joinRoom(browser, host, 'モバイル参加者');
   await host.getByRole('button', { name: 'ドラフトを開始' }).click();
   await expect(host.getByRole('radio', { name: '上田', exact: true })).toBeEnabled();
   await host.context().setOffline(true);
@@ -163,7 +174,7 @@ test('参加成功後に保存が失敗しても発行済み認証で入室し�
   guest.on('request', (request) => {
     if (request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/join')) joinRequests += 1;
   });
-  await guest.goto(host.url());
+  await guest.goto(await inviteUrlFor(host));
   await guest.getByLabel('表示名').fill('保存不可参加者');
   await guest.getByRole('button', { name: '参加する' }).click();
   await expect(guest.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
