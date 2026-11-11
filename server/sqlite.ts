@@ -3,7 +3,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
 import type { Room } from '../shared/types.js';
-import { RepositoryConflictError, type RoomRepository } from './repository.js';
+import { RepositoryConflictError, type RoomRepository, type StoredTopic } from './repository.js';
 
 export const ROOM_STORAGE_VERSION = 1;
 
@@ -23,6 +23,10 @@ export class SqliteRoomRepository implements RoomRepository {
     this.#database = new DatabaseSync(path);
     this.#database.exec('PRAGMA journal_mode = WAL');
     this.#initializeSchema();
+    this.#database.exec(`CREATE TABLE IF NOT EXISTS topics (
+      id TEXT PRIMARY KEY, title TEXT NOT NULL, candidates TEXT NOT NULL,
+      is_public INTEGER NOT NULL CHECK (is_public IN (0,1)), created_at TEXT NOT NULL, owner_hash TEXT NOT NULL
+    ) STRICT;`);
   }
 
   async get(id: string): Promise<Room | undefined> {
@@ -72,6 +76,29 @@ export class SqliteRoomRepository implements RoomRepository {
     if (Number(result.changes) !== 1) {
       throw new RepositoryConflictError();
     }
+  }
+
+  async createTopic(topic: StoredTopic): Promise<void> {
+    try {
+      this.#database.prepare('INSERT INTO topics (id,title,candidates,is_public,created_at,owner_hash) VALUES (?,?,?,?,?,?)').run(topic.id, topic.title, JSON.stringify(topic.candidates), Number(topic.isPublic), topic.createdAt, topic.ownerHash);
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) throw new RepositoryConflictError();
+      throw error;
+    }
+  }
+
+  #topic(row: unknown): StoredTopic {
+    const r = row as { id: string; title: string; candidates: string; is_public: number; created_at: string; owner_hash: string };
+    return { id: r.id, title: r.title, candidates: JSON.parse(r.candidates) as string[], isPublic: Boolean(r.is_public), createdAt: r.created_at, ownerHash: r.owner_hash };
+  }
+
+  async getTopic(id: string): Promise<StoredTopic | undefined> {
+    const row = this.#database.prepare('SELECT * FROM topics WHERE id = ?').get(id);
+    return row ? this.#topic(row) : undefined;
+  }
+
+  async listTopics(ownerHash?: string): Promise<StoredTopic[]> {
+    return this.#database.prepare('SELECT * FROM topics WHERE is_public = 1 OR owner_hash = ? ORDER BY created_at DESC, id').all(ownerHash ?? '').map(row => this.#topic(row));
   }
 
   close(): void {

@@ -131,3 +131,29 @@ body:has(.creation-dialog[open]) { overflow: hidden; }
   .creation-dialog { max-height: calc(100svh - 40px); }
 }
 
+/* Saved topics and separate room settings. */
+.creation-fields { display: grid; gap: 20px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.creation-fields:disabled { opacity: .7; }
+.creation-fields select {
+  display: block; width: 100%; min-width: 0; margin-top: 7px; padding: 13px 36px 13px 14px;
+  color: #171717; background: #fff; border: 3px solid #171717; border-radius: 4px; font: inherit;
+  text-overflow: ellipsis;
+}
+.creation-fields select:focus-visible { outline: 3px solid #1b63ff; outline-offset: 2px; }
+.topic-help { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.7; }
+.topic-visibility { padding: 16px; border: 2px solid #171717; border-radius: 8px; background: #fff7e8; }
+.topic-visibility__label { display: flex; align-items: center; gap: 12px; min-height: 32px; cursor: pointer; font-size: 15px; }
+.topic-visibility__label input { flex: 0 0 auto; width: 24px; height: 24px; margin: 0; accent-color: #171717; box-shadow: none; }
+.topic-visibility p { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+.topic-saved { display: grid; gap: 16px; margin-top: 28px; }
+.topic-saved__notice { margin: 0; color: #18794e; font-weight: 800; }
+.topic-saved__title { margin: 0; font-size: 22px; font-weight: 800; overflow-wrap: anywhere; }
+.topic-list-message p { margin: 0 0 8px; font-size: 13px; }
+.topic-text-button { padding: 6px 0; color: #174bc4; background: none; border: 0; font: inherit; font-weight: 700; text-decoration: underline; text-underline-offset: 4px; }
+.saved-topic-preview { min-width: 0; border: 2px solid #171717; border-radius: 8px; overflow: hidden; background: #fff; }
+.saved-topic-preview__heading { display: flex; justify-content: space-between; padding: 10px 14px; border-bottom: 2px solid #171717; background: #ffd84d; font-size: 12px; }
+.saved-topic-preview__table { max-height: 180px; overflow: auto; }
+.saved-topic-preview table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+.saved-topic-preview th, .saved-topic-preview td { padding: 8px 12px; border-bottom: 1px solid #e0d9cd; text-align: left; overflow-wrap: anywhere; }
+.saved-topic-preview th:first-child, .saved-topic-preview td:first-child { width: 55px; }
+.saved-topic-preview th { color: var(--muted); font-size: 11px; }

@@ -1,10 +1,20 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
-async function createRoom(page: Page, hostName = '主催'): Promise<void> {
+async function openCreateRoom(page: Page): Promise<void> {
+  const created = await page.request.post('/api/topics', {
+    headers: { 'x-topic-owner': crypto.randomUUID() + crypto.randomUUID() },
+    data: { title: `テストのお題 ${crypto.randomUUID()}`, names: '青木\n伊藤\n上田\n遠藤', isPublic: true },
+  });
+  expect(created.status()).toBe(201);
+  const topic = await created.json() as { id: string };
   await page.goto('/');
   await page.getByRole('button', { name: 'ルーム作成', exact: true }).click();
+  await page.getByLabel('お題を選択').selectOption(topic.id);
+}
+
+async function createRoom(page: Page, hostName = '主催'): Promise<void> {
+  await openCreateRoom(page);
   await page.getByLabel('表示名').fill(hostName);
-  await page.getByLabel('候補の名前').fill('青木\n伊藤\n上田\n遠藤');
   await page.getByLabel('各チームの獲得人数').fill('1');
   await page.getByRole('button', { name: '会議を作成' }).click();
   await expect(page).toHaveURL(/\/room\/[^/]+$/u);
@@ -120,10 +130,8 @@ test('参加情報を保存できないブラウザーでは送信前に停止�
   page.on('request', (request) => {
     if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/rooms') createRequests += 1;
   });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'ルーム作成', exact: true }).click();
+  await openCreateRoom(page);
   await page.getByLabel('表示名').fill('保存できない主催');
-  await page.getByLabel('候補の名前').fill('青木\n伊藤');
   await page.getByRole('button', { name: '会議を作成' }).click();
   await expect(page.getByText('このブラウザーでは参加情報を保存できません。')).toBeVisible();
   expect(createRequests).toBe(0);
@@ -172,10 +180,8 @@ test('作成成功後の保存失敗でも履歴移動後に認証と警告を�
   page.on('request', (request) => {
     if (request.method() === 'POST' && new URL(request.url()).pathname === '/api/rooms') createRequests += 1;
   });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'ルーム作成', exact: true }).click();
+  await openCreateRoom(page);
   await page.getByLabel('表示名').fill('履歴主催');
-  await page.getByLabel('候補の名前').fill('青木\n伊藤');
   await page.getByRole('button', { name: '会議を作成' }).click();
   await expect(page.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
   await expect(page.getByText('参加情報を永続保存できませんでした。')).toBeVisible();
