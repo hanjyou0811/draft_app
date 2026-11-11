@@ -79,7 +79,7 @@ export function App() {
   return (
     <div className="app-shell">
       {roomId !== undefined && <Header />}
-      {persistenceWarning && <div className="storage-warning" role="alert">参加情報を永続保存できませんでした。このタブを再読み込み・閉じると復帰できません。</div>}
+      {persistenceWarning && <div className="storage-warning" role="alert">参加情報を保存できませんでした。このタブを再読み込み・閉じると復帰できません。</div>}
       {roomId === undefined
         ? <CreateRoom onCreated={(created, persisted) => {
           setInitialCredentials(created);
