@@ -1,11 +1,10 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 
 import type { Credentials } from '../../shared/types.js';
 import { api, ApiError, canPersistCredentials, saveCredentials } from '../api.js';
-import lotteryImage from '../../baseball_draft_kuji.png';
-import resultImage from '../../baseball_draft_kekka.png';
-import '../hero-lottery.css';
 import { Button } from './ui/Button.js';
+
+import '../landing.css';
 
 export function CreateRoom({ onCreated }: {
   readonly onCreated: (credentials: Credentials, persisted: boolean) => void;
@@ -16,11 +15,23 @@ export function CreateRoom({ onCreated }: {
   const [teamSize, setTeamSize] = useState('1');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
-  const [lotteryState, setLotteryState] = useState<'idle' | 'drawing' | 'result'>('idle');
+  const [panel, setPanel] = useState<'topic' | 'room' | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const topicRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (panel === null) { dialog.close(); return; }
+    if (!dialog.open) dialog.showModal();
+    (panel === 'topic' ? topicRef : nameRef).current?.focus();
+  }, [panel]);
   const candidateCount = useMemo(() => names.split(/\r?\n/u).filter((value) => value.trim()).length, [names]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (busy) return;
+    if (panel === 'topic') { setPanel('room'); return; }
     setError(undefined);
     if (!canPersistCredentials()) {
       setError('このブラウザーでは参加情報を保存できません。ブラウザーの保存設定を確認してください。');
@@ -37,43 +48,36 @@ export function CreateRoom({ onCreated }: {
   };
 
   return (
-    <main className="landing">
-      <section className="hero">
-        <img className="hero-logo" src="/hero-logo.svg" alt="DRAFT ROOM" width="600" height="160" />
-        <h1 className="visually-hidden">みんなで楽しむドラフト会議</h1>
-        <figure className="hero-lottery">
-          <button
-            type="button"
-            className={`hero-lottery__scene hero-lottery__scene--${lotteryState}`}
-            aria-label={lotteryState === 'result' ? 'もう一度くじを引く準備をする' : 'くじを引く'}
-            aria-disabled={lotteryState === 'drawing'}
-            onClick={() => {
-              if (lotteryState !== 'drawing') setLotteryState(lotteryState === 'idle' ? 'drawing' : 'idle');
-            }}
-            onAnimationEnd={(event) => {
-              if (event.animationName === 'hero-lottery-result') setLotteryState('result');
-            }}
-          >
-            <img className="hero-lottery__image hero-lottery__image--draw" src={lotteryImage} alt="" width="397" height="400" />
-            <img className="hero-lottery__image hero-lottery__image--result" src={resultImage} alt="" width="412" height="450" />
-          </button>
-        </figure>
-        <ol className="hero-steps"><li><span>1</span>候補を登録</li><li><span>2</span>URLで招待</li><li><span>3</span>一斉に指名</li></ol>
+    <main className="draft-home">
+      <section className="draft-home__content" aria-label="ドラフトをはじめる">
+        <h1 className="draft-home__title" aria-label="ドラフト">
+          <span aria-hidden="true">ド</span><span aria-hidden="true">ラ</span><span aria-hidden="true">フ</span><span aria-hidden="true">ト</span>
+        </h1>
+        <div className="draft-home__actions">
+          <button type="button" className="draft-home__button draft-home__button--topic" onClick={() => setPanel('topic')}>お題作成</button>
+          <button type="button" className="draft-home__button draft-home__button--room" onClick={() => setPanel('room')}>ルーム作成</button>
+        </div>
       </section>
-      <section className="paper-card create-card" aria-labelledby="create-title">
-        <p className="step-label">STEP 01</p>
-        <h2 id="create-title">ドラフト会議をつくる</h2>
+      <a className="draft-home__github" href="https://github.com/hanjyou0811/draft_app" target="_blank" rel="noopener noreferrer" aria-label="GitHubでソースコードを見る">
+        <img src="/icons/github.svg" width="56" height="56" alt="" />
+      </a>
+      <dialog ref={dialogRef} className="creation-dialog" aria-labelledby="create-title" onCancel={event => { event.preventDefault(); if (!busy) setPanel(null); }} onClick={event => { if (event.target === event.currentTarget && !busy) setPanel(null); }}>
+        <div className="creation-dialog__content">
+          <button className="creation-dialog__close" type="button" aria-label="閉じる" disabled={busy} onClick={() => setPanel(null)}>×</button>
+          <p className="step-label">{panel === 'topic' ? 'まずは、お題から。' : 'みんなで、ドラフト。'}</p>
+          <h2 id="create-title">{panel === 'topic' ? 'お題をつくる' : 'ドラフト会議をつくる'}</h2>
         <form onSubmit={(event) => void submit(event)}>
-          <label>お題（任意）<input value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="例：夏に食べたいものドラフト" maxLength={100} aria-describedby="topic-note" /></label>
+          <label>お題（任意）<input ref={topicRef} value={topic} onChange={(event) => setTopic(event.target.value)} placeholder="例：夏に食べたいものドラフト" maxLength={100} aria-describedby="topic-note" /></label>
           <p id="topic-note" className="topic-note">空欄でも作成できます。100文字まで。</p>
-          <label>表示名<input value={name} onChange={(event) => setName(event.target.value)} placeholder="例：東京チーム" maxLength={30} required autoComplete="nickname" /></label>
+          {panel === 'room' && <label>表示名<input ref={nameRef} value={name} onChange={(event) => setName(event.target.value)} placeholder="例：東京チーム" maxLength={30} required autoComplete="nickname" /></label>}
           <label>候補の名前<textarea value={names} onChange={(event) => setNames(event.target.value)} placeholder={'1行に1つずつ入力\n例：そうめん\n　　かき氷'} rows={7} required /></label>
           <p className="field-note"><span>候補 {candidateCount}項目</span><span>最大500項目</span></p>
-          <label>各チームの獲得人数<input value={teamSize} onChange={(event) => setTeamSize(event.target.value)} type="number" min="1" max="50" required /></label>
+          {panel === 'room' && <label>各チームの獲得人数<input value={teamSize} onChange={(event) => setTeamSize(event.target.value)} type="number" min="1" max="50" required /></label>}
           {error && <p className="alert alert--error" role="alert">{error}</p>}
-          <Button disabled={busy} type="submit">{busy ? '作成中…' : '会議を作成'}</Button>
+          <Button disabled={busy} type="submit">{panel === 'topic' ? 'このお題でルーム作成' : busy ? '作成中…' : '会議を作成'}</Button>
         </form>
-      </section>
+        </div>
+      </dialog>
     </main>
   );
 }
