@@ -151,7 +151,7 @@ test('参加成功後に保存が失敗しても発行済み認証で入室し�
   await guest.getByLabel('表示名').fill('保存不可参加者');
   await guest.getByRole('button', { name: '参加する' }).click();
   await expect(guest.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
-  await expect(guest.getByText('参加情報を永続保存できませんでした。')).toBeVisible();
+  await expect(guest.getByText('参加情報を保存できませんでした。')).toBeVisible();
   await expect(host.getByText('保存不可参加者', { exact: true })).toHaveCount(1);
   expect(joinRequests).toBe(1);
 });
