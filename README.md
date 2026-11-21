@@ -94,3 +94,7 @@ E2Eテストは失敗時に1回再試行し、`test.only` が残っている場�
 | ブラウザーシナリオ | `e2e/draft.spec.ts` |
 
 ドメイン層はReact、HTTP、WebSocket、SQLiteに依存しません。保存処理は非同期の `RoomRepository` を通すため、ルールを保ったまま保存先を交換できます。詳しい境界は `docs/architecture/change-guide.md` にあります。
+
+## トップ画面
+
+クリーム色とオレンジを基調にしたネオブルータリズムのトップ画面です。「お題作成」で候補を準備し、「ルーム作成」で既存の作成フォームを開きます。無料フォントDela Gothic Oneと公式GitHubアイコンを同梱し、外部CDNへ接続せず表示します。

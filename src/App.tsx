@@ -78,8 +78,8 @@ export function App() {
   const roomId = roomIdFromPath(pathname);
   return (
     <div className="app-shell">
-      <Header />
-      {persistenceWarning && <div className="storage-warning" role="alert">参加情報を永続保存できませんでした。このタブを再読み込み・閉じると復帰できません。</div>}
+      {roomId !== undefined && <Header />}
+      {persistenceWarning && <div className="storage-warning" role="alert">参加情報を保存できませんでした。このタブを再読み込み・閉じると復帰できません。</div>}
       {roomId === undefined
         ? <CreateRoom onCreated={(created, persisted) => {
           setInitialCredentials(created);
@@ -93,7 +93,7 @@ export function App() {
           {...(initialCredentials?.roomId === roomId ? { initialCredentials } : {})}
           onPersistenceFailure={() => setPersistenceWarning(true)}
         />}
-      <footer>© DRAFT ROOM <span>FAIR PICKS. GREAT TEAMS.</span></footer>
+      {roomId !== undefined && <footer>© DRAFT ROOM <span>FAIR PICKS. GREAT TEAMS.</span></footer>}
     </div>
   );
 }
