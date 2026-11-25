@@ -5,9 +5,12 @@ async function fixture(request: APIRequestContext, teamSize = 5, count = 60, mem
   const response = await request.post('/api/rooms', { data: { name: '東京チーム', topic: '夏に食べたいもの', names, teamSize } });
   expect(response.status()).toBe(201);
   const host = await response.json() as { roomId: string; token: string };
+  const invitation = await request.get(`/api/rooms/${host.roomId}/invitation`, { headers: { authorization: `Bearer ${host.token}` } });
+  expect(invitation.status()).toBe(200);
+  const { inviteKey } = await invitation.json() as { inviteKey: string };
   const participants = [host];
   for (let i = 1; i < members; i++) {
-    const joined = await request.post(`/api/rooms/${host.roomId}/join`, { data: { name: ['大阪チーム', '福岡チーム', '札幌チーム'][i - 1] ?? `チーム${i + 1}` } });
+    const joined = await request.post('/api/invitations/join', { data: { inviteKey, name: ['大阪チーム', '福岡チーム', '札幌チーム'][i - 1] ?? `チーム${i + 1}` } });
     expect(joined.status()).toBe(201);
     participants.push(await joined.json());
   }
@@ -39,7 +42,7 @@ test('待機中は招待URLを隠し、キーボードでタブを切り替え�
   await expect(page.getByRole('region', { name: '候補一覧' })).toContainText('候補 060');
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: /招待URL/ })).toBeFocused();
-  await expect(page.getByRole('textbox', { name: '招待URL', exact: true })).toHaveValue(page.url());
+  await expect(page.getByRole('textbox', { name: '招待URL', exact: true })).toHaveValue(/\/invite\//u);
   await page.keyboard.press('Home');
   await expect(page.getByRole('tab', { name: /参加者/ })).toBeFocused();
   await expect(page.locator('#invite-url')).toHaveCount(0);

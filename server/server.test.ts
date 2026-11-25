@@ -97,6 +97,8 @@ async function startTestServer(
   return { server, origin: address.origin };
 }
 
+const testInvitationKeys = new Map<string, string>();
+
 async function jsonRequest(
   origin: string,
   method: string,
@@ -104,18 +106,25 @@ async function jsonRequest(
   body?: unknown,
   token?: string,
 ): Promise<JsonResponse> {
+  const roomMatch = /^\/api\/rooms\/([^/]+)\/(info|join)$/u.exec(path);
+  const inviteKey = roomMatch ? testInvitationKeys.get(roomMatch[1]!) : undefined;
+  if (roomMatch?.[2] === 'join' && inviteKey) body = { ...(body as object), inviteKey };
   const response = await fetch(`${origin}${path}`, {
     method,
     headers: {
       ...(body === undefined ? {} : { 'content-type': 'application/json' }),
       ...(token === undefined ? {} : { authorization: `Bearer ${token}` }),
+      ...(inviteKey ? { 'x-invite-key': inviteKey } : {}),
     },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
-  return {
-    status: response.status,
-    body: await response.json() as Record<string, unknown>,
-  };
+  const result = { status: response.status, body: await response.json() as Record<string, unknown> };
+  if (path === '/api/rooms' && result.status === 201) {
+    const invitation = await jsonRequest(origin, 'GET', `/api/rooms/${String(result.body.roomId)}/invitation`, undefined, String(result.body.token));
+    assert.equal(invitation.status, 200);
+    testInvitationKeys.set(String(result.body.roomId), String(invitation.body.inviteKey));
+  }
+  return result;
 }
 
 async function createBasicRoom(origin: string, names = '候補 A\n候補 B'): Promise<{
@@ -299,8 +308,8 @@ describe('HTTP API', () => {
     const { path } = await temporaryDatabase();
     const { origin } = await startTestServer(path);
     assert.deepEqual(await jsonRequest(origin, 'GET', '/api/rooms/missing/info'), {
-      status: 404,
-      body: { error: '会議が見つかりません。' },
+      status: 403,
+      body: { error: '参加には招待リンクが必要です。' },
     });
 
     const created = await createBasicRoom(origin);
@@ -543,4 +552,41 @@ describe('WebSocket updates', () => {
     });
     assert.equal(status, 403);
   });
+});
+
+test('HTTP invitation endpoints protect metadata and legacy joins with uniform invalid-key errors', async () => {
+  const { path } = await temporaryDatabase();
+  const { origin } = await startTestServer(path);
+  const host = await createBasicRoom(origin);
+  const roomPath = `/api/rooms/${host.roomId}`;
+  const invite = await jsonRequest(origin, 'GET', roomPath + '/invitation', undefined, host.token);
+  const inviteKey = String(invite.body.inviteKey);
+  const raw = async (route: string, method = 'GET', body?: unknown, headers: Record<string, string> = {}) => {
+    const response = await fetch(origin + route, {
+      method,
+      headers: { 'content-type': 'application/json', ...headers },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    return { status: response.status, body: await response.json() as Record<string, unknown> };
+  };
+  assert.equal((await raw(roomPath + '/info')).status, 403);
+  assert.equal((await raw(roomPath + '/join', 'POST', { name: 'Intruder' })).status, 403);
+  assert.equal((await raw(roomPath + '/invitation')).status, 401);
+  assert.equal((await raw('/api/invitations/resolve', 'POST', { inviteKey })).body.roomId, host.roomId);
+  const guest = await raw('/api/invitations/join', 'POST', { inviteKey, name: 'Guest' });
+  assert.equal(guest.status, 201);
+  for (const method of ['GET', 'POST']) {
+    assert.equal((await raw(roomPath + '/invitation', method, method === 'POST' ? {} : undefined, { authorization: `Bearer ${String(guest.body.token)}` })).status, 403);
+  }
+  const rotated = await jsonRequest(origin, 'POST', roomPath + '/invitation', {}, host.token);
+  assert.equal(rotated.status, 200);
+  const missing = await raw('/api/invitations/resolve', 'POST', { inviteKey: 'bad' });
+  for (const key of [inviteKey, 'missing.' + 'a'.repeat(64), '%ZZ.' + 'a'.repeat(64)]) {
+    assert.deepEqual(await raw('/api/invitations/resolve', 'POST', { inviteKey: key }), missing);
+  }
+  assert.equal(missing.status, 404);
+  assert.equal((await raw(roomPath + '/join', 'POST', { inviteKey, name: 'Late' })).status, 404);
+  const other = await createBasicRoom(origin);
+  assert.equal((await raw(`/api/rooms/${other.roomId}/join`, 'POST', { inviteKey: rotated.body.inviteKey, name: 'Wrong' })).status, 404);
+  assert.equal((await raw(`/api/rooms/${other.roomId}/info`, 'GET', undefined, { 'x-invite-key': String(rotated.body.inviteKey) })).status, 404);
 });

@@ -51,6 +51,10 @@ export function toPublicError(error: unknown): PublicError | undefined {
     return { status: error.status, message: error.publicMessage };
   }
   if (error instanceof ServiceError) {
+    if (error.code === 'INVITATION_NOT_FOUND') return { status: 404, message: '招待が見つかりません。' };
+    if (error.code === 'INVITATION_REQUIRED') return { status: 403, message: '参加には招待リンクが必要です。' };
+    if (error.code === 'INVITATION_HOST_ONLY') return { status: 403, message: '招待を管理できるのは作成者だけです。' };
+    if (error.code === 'INVITATION_NOT_WAITING') return { status: 409, message: 'この会議はすでに開始されています。' };
     if (error.code === 'INVALID_TOPIC' || error.code === 'INVALID_TOPIC_OWNER') return { status: 400, message: 'お題または認証情報が正しくありません。' };
     if (error.code === 'TOPIC_NOT_FOUND') return { status: 404, message: 'お題が見つかりません。' };
     return error.code === 'ROOM_NOT_FOUND'

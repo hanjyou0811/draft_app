@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { Credentials } from '../shared/types.js';
 import { readCredentials, readCredentialState } from './api.js';
@@ -39,24 +39,26 @@ function ActiveRoom({ credentials }: { readonly credentials: Credentials }) {
     <>
       {controller.message && <div className="global-message" role="alert"><span>{controller.message}</span><button type="button" onClick={controller.clearMessage} aria-label="メッセージを閉じる">×</button></div>}
       {controller.room.status === 'waiting'
-        ? <WaitingRoom room={controller.room} syncStatus={controller.syncStatus} busy={controller.busy} onStart={() => void controller.start()} />
+        ? <WaitingRoom credentials={credentials} room={controller.room} syncStatus={controller.syncStatus} busy={controller.busy} onStart={() => void controller.start()} />
         : <DraftRoom room={controller.room} syncStatus={controller.syncStatus} busy={controller.busy} onPick={(candidateId) => void controller.pick(candidateId)} />}
     </>
   );
 }
 
-function RoomPage({ roomId, initialCredentials, onPersistenceFailure }: {
+function RoomPage({ roomId, initialCredentials }: {
   readonly roomId: string;
   readonly initialCredentials?: Credentials;
-  readonly onPersistenceFailure: () => void;
 }) {
-  const [credentials, setCredentials] = useState(() => initialCredentials ?? readCredentials(roomId));
+  const [credentials] = useState(() => initialCredentials ?? readCredentials(roomId));
   return credentials === undefined
-    ? <JoinRoom roomId={roomId} onJoined={(joined, persisted) => {
-      setCredentials(joined);
-      if (!persisted) onPersistenceFailure();
-    }} />
+    ? <main className="center-card"><section className="paper-card"><h1>招待リンクが必要です</h1><p>ルームURLだけでは新しく参加できません。主催者から招待リンクを受け取って開いてください。</p><a href="/">トップに戻る</a></section></main>
     : <ActiveRoom credentials={credentials} />;
+}
+
+function invitationKeyFromPath(pathname: string): string | undefined {
+  const match = /^\/invite\/([^/]+)\/?$/u.exec(pathname);
+  if (match?.[1] === undefined) return undefined;
+  try { return decodeURIComponent(match[1]); } catch { return ''; }
 }
 
 export function App() {
@@ -75,12 +77,22 @@ export function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
+  const onJoined = useCallback((joined: Credentials, persisted: boolean) => {
+    setInitialCredentials(joined);
+    setPersistenceWarning(!persisted);
+    const nextPath = `/room/${encodeURIComponent(joined.roomId)}`;
+    history.replaceState(null, '', nextPath);
+    setPathname(nextPath);
+  }, []);
   const roomId = roomIdFromPath(pathname);
+  const inviteKey = invitationKeyFromPath(pathname);
   return (
     <div className="app-shell">
-      {roomId !== undefined && <Header />}
+      {(roomId !== undefined || inviteKey !== undefined) && <Header />}
       {persistenceWarning && <div className="storage-warning" role="alert">参加情報を永続保存できませんでした。このタブを再読み込み・閉じると復帰できません。</div>}
-      {roomId === undefined
+      {inviteKey !== undefined
+        ? <JoinRoom key={inviteKey} inviteKey={inviteKey} onJoined={onJoined} />
+        : roomId === undefined
         ? <CreateRoom onCreated={(created, persisted) => {
           setInitialCredentials(created);
           setPersistenceWarning(!persisted);
@@ -89,9 +101,9 @@ export function App() {
           setPathname(nextPath);
         }} />
         : <RoomPage
+          key={roomId}
           roomId={roomId}
           {...(initialCredentials?.roomId === roomId ? { initialCredentials } : {})}
-          onPersistenceFailure={() => setPersistenceWarning(true)}
         />}
       {roomId !== undefined && <footer>© DRAFT ROOM <span>FAIR PICKS. GREAT TEAMS.</span></footer>}
     </div>

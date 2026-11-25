@@ -9,9 +9,10 @@ test('independent servers preserve concurrent joins and picks', async () => {
     const a = new DraftService(repository);
     const b = new DraftService(repository);
     const host = await a.createRoom({ name: 'Host', names: 'A\nB\nC\nD', teamSize: 1 });
+    const { inviteKey } = await a.getInvitation(host);
     const [guest, third] = await Promise.all([
-      a.joinRoom(host.roomId, { name: 'Guest' }),
-      b.joinRoom(host.roomId, { name: 'Third' }),
+      a.joinRoom(host.roomId, { name: 'Guest', inviteKey }),
+      b.joinRoom(host.roomId, { name: 'Third', inviteKey }),
     ]);
     const room = await a.startRoom(host);
     await Promise.all([host, guest, third].map((credentials, i) =>
