@@ -7,10 +7,10 @@ import {
   submitPick,
   toView,
 } from '../domain/draft.js';
-import type { Credentials, Room, RoomView } from '../shared/types.js';
-import { RepositoryConflictError, type RoomRepository } from './repository.js';
+import type { Credentials, Room, RoomView, SavedTopic } from '../shared/types.js';
+import { RepositoryConflictError, type RoomRepository, type StoredTopic } from './repository.js';
 
-export type ServiceErrorCode = 'ROOM_NOT_FOUND' | 'UNAUTHORIZED';
+export type ServiceErrorCode = 'ROOM_NOT_FOUND' | 'TOPIC_NOT_FOUND' | 'INVALID_TOPIC' | 'INVALID_TOPIC_OWNER' | 'UNAUTHORIZED';
 
 export class ServiceError extends Error {
   constructor(readonly code: ServiceErrorCode) {
@@ -22,7 +22,8 @@ export class ServiceError extends Error {
 export interface CreateRoomRequest {
   readonly topic?: string;
   readonly name: string;
-  readonly names: string;
+  readonly names?: string;
+  readonly topicId?: string;
   readonly teamSize: number;
 }
 
@@ -75,12 +76,50 @@ export class DraftService {
     this.#chooseIndex = options.chooseIndex ?? randomInt;
   }
 
-  async createRoom(input: CreateRoomRequest): Promise<Credentials> {
+  async createTopic(input: { title: string; names: string; isPublic?: boolean }, ownerToken?: string): Promise<SavedTopic> {
+    const ownerHash = this.#ownerHash(ownerToken);
+    if (!ownerHash) throw new ServiceError('INVALID_TOPIC_OWNER');
+    const title = typeof input.title === 'string' ? input.title.trim() : '';
+    const candidates = typeof input.names === 'string' ? input.names.split(/\r?\n/u).map(name => name.trim()).filter(Boolean) : [];
+    if (!title || title.length > 100 || !candidates.length || candidates.length > 500 ||
+        candidates.some(name => name.length > 100) || new Set(candidates).size !== candidates.length ||
+        (input.isPublic !== undefined && typeof input.isPublic !== 'boolean')) throw new ServiceError('INVALID_TOPIC');
+    for (;;) {
+      const topic: StoredTopic = { id: this.#createId(), title, candidates, isPublic: input.isPublic ?? false, createdAt: new Date().toISOString(), ownerHash };
+      try { await this.repository.createTopic(topic); return this.#topicView(topic, ownerHash); }
+      catch (error) { if (!(error instanceof RepositoryConflictError)) throw error; }
+    }
+  }
+
+  async listTopics(ownerToken?: string): Promise<SavedTopic[]> {
+    const ownerHash = this.#ownerHash(ownerToken);
+    return (await this.repository.listTopics(ownerHash)).filter(topic => topic.isPublic || topic.ownerHash === ownerHash).map(topic => this.#topicView(topic, ownerHash));
+  }
+
+  #ownerHash(token?: string): string | undefined {
+    if (token === undefined) return undefined;
+    if (typeof token !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(token)) throw new ServiceError('INVALID_TOPIC_OWNER');
+    return hashToken(token);
+  }
+
+  #topicView(topic: StoredTopic, ownerHash?: string): SavedTopic {
+    return { id: topic.id, title: topic.title, candidates: [...topic.candidates], isPublic: topic.isPublic, createdAt: topic.createdAt, isOwner: topic.ownerHash === ownerHash };
+  }
+
+  async createRoom(input: CreateRoomRequest, ownerToken?: string): Promise<Credentials> {
+    const ownerHash = this.#ownerHash(ownerToken);
+    if (input.topicId !== undefined) {
+      if (typeof input.topicId !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/u.test(input.topicId)) throw new ServiceError('TOPIC_NOT_FOUND');
+      const topic = await this.repository.getTopic(input.topicId);
+      if (!topic || (!topic.isPublic && topic.ownerHash !== ownerHash)) throw new ServiceError('TOPIC_NOT_FOUND');
+      input = { name: input.name, teamSize: input.teamSize, topic: topic.title, names: topic.candidates.join('\n') };
+    }
+
     for (;;) {
       const roomId = this.#createId();
       const memberId = this.#createId();
       const token = this.#createToken();
-      const candidates = input.names
+      const candidates = (input.names ?? '')
         .split(/\r?\n/u)
         .map((name) => name.trim())
         .filter((name) => name.length > 0)

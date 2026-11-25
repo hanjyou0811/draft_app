@@ -1,4 +1,4 @@
-import type { Credentials, RoomStatus, RoomView } from '../shared/types.js';
+import type { Credentials, RoomStatus, RoomView, SavedTopic } from '../shared/types.js';
 
 export interface RoomInfo {
   readonly topic?: string;
@@ -103,9 +103,30 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 const authorization = (token: string): HeadersInit => ({ authorization: `Bearer ${token}` });
 
+const topicOwnerKey = 'draft-room:topic-owner';
+const topicOwnerPattern = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}){2}$/iu;
+
+function topicOwnerHeaders(required = false): Record<string, string> {
+  try {
+    const stored = localStorage.getItem(topicOwnerKey);
+    if (stored && topicOwnerPattern.test(stored)) return { 'x-topic-owner': stored };
+    if (!required) return {};
+    const token = crypto.randomUUID() + crypto.randomUUID();
+    localStorage.setItem(topicOwnerKey, token);
+    if (localStorage.getItem(topicOwnerKey) !== token) throw new Error('storage unavailable');
+    return { 'x-topic-owner': token };
+  } catch {
+    if (required) throw new ApiError('お題の作成者情報を保存できません。ブラウザーの保存設定を確認してください。');
+    return {};
+  }
+}
+
 export const api = {
-  createRoom: (body: { name: string; names: string; teamSize: number; topic?: string }) =>
-    request<Credentials>('/api/rooms', { method: 'POST', body: JSON.stringify(body) }),
+  listTopics: () => request<SavedTopic[]>('/api/topics', { headers: topicOwnerHeaders() }),
+  createTopic: async (body: { title: string; names: string; isPublic: boolean }) =>
+    request<SavedTopic>('/api/topics', { method: 'POST', headers: topicOwnerHeaders(true), body: JSON.stringify(body) }),
+  createRoom: (body: { name: string; topicId: string; teamSize: number }) =>
+    request<Credentials>('/api/rooms', { method: 'POST', headers: topicOwnerHeaders(), body: JSON.stringify(body) }),
   getInfo: (roomId: string) => request<RoomInfo>(`/api/rooms/${encodeURIComponent(roomId)}/info`),
   joinRoom: (roomId: string, name: string) => request<Credentials>(
     `/api/rooms/${encodeURIComponent(roomId)}/join`,

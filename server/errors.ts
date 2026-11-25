@@ -51,6 +51,8 @@ export function toPublicError(error: unknown): PublicError | undefined {
     return { status: error.status, message: error.publicMessage };
   }
   if (error instanceof ServiceError) {
+    if (error.code === 'INVALID_TOPIC' || error.code === 'INVALID_TOPIC_OWNER') return { status: 400, message: 'お題または認証情報が正しくありません。' };
+    if (error.code === 'TOPIC_NOT_FOUND') return { status: 404, message: 'お題が見つかりません。' };
     return error.code === 'ROOM_NOT_FOUND'
       ? { status: 404, message: '会議が見つかりません。' }
       : { status: 401, message: '認証情報が正しくありません。' };

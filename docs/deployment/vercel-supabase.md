@@ -4,7 +4,9 @@
 
 ## 1. Supabaseのテーブルを作る
 
-専用プロジェクト `bcvanvhqvodibxfeufqk` のSQL Editorで、`supabase/migrations/20260911000000_draft_rooms.sql` を一度実行します。
+専用プロジェクト `bcvanvhqvodibxfeufqk` のSQL Editorで、`supabase/migrations/20260911000000_draft_rooms.sql` を一度実行し、続けて `supabase/migrations/20261110000000_saved_topics.sql` を実行します。既存環境の更新では、後者のお題用マイグレーションだけをAPIの更新前に適用してください。
+
+お題は `draft_topics` に保存します。公開／非公開の初期値は非公開です。RLSを有効にし、匿名・一般ユーザーからのDBへの直接アクセスは許可しません。APIが作成者トークンのハッシュを確認し、公開のお題と作成者自身のお題だけを返します。今回のローカル作業では、本番DBへのSQL適用やデプロイは行いません。
 
 テーブルへのブラウザからの直接アクセスは禁止し、VercelのAPIだけが会議を読み書きします。Data APIが有効で、publicスキーマが公開対象になっている必要があります。
 
