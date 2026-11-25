@@ -157,3 +157,8 @@ body:has(.creation-dialog[open]) { overflow: hidden; }
 .saved-topic-preview th, .saved-topic-preview td { padding: 8px 12px; border-bottom: 1px solid #e0d9cd; text-align: left; overflow-wrap: anywhere; }
 .saved-topic-preview th:first-child, .saved-topic-preview td:first-child { width: 55px; }
 .saved-topic-preview th { color: var(--muted); font-size: 11px; }
+
+.topic-copy { min-width: 0; padding: 12px 16px; border: 2px solid #171717; border-radius: 8px; background: #fff7e8; }
+.topic-copy > .topic-text-button { text-align: left; font-size: 13px; }
+.topic-copy__picker { display: grid; gap: 12px; margin-top: 12px; min-width: 0; }
+.topic-copy__notice { margin: 0; color: #18794e; font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
