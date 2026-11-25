@@ -52,7 +52,7 @@ export function CreateTopicForm({ onSaved, onUseTopic, onBusyChange }: {
         <PublicTopicCopy onCopy={source => {
           setNames(source.candidates.join('\n'));
           setTitle(current => current.trim() ? current : source.title);
-          setCopyNotice(`「${source.title}」の候補 ${source.candidates.length}件をコピーしました。`);
+          setCopyNotice(`お題「${source.title}」の候補  ${source.candidates.length}件をコピーしました。`);
           setError(undefined);
           namesRef.current?.focus();
         }} />
