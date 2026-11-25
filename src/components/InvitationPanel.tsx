@@ -85,7 +85,7 @@ export function InvitationPanel({ credentials, version }: InvitationPanelProps) 
       {inviteKey && <>
         <label htmlFor="invite-url">招待URL</label>
         <input ref={inputRef} id="invite-url" value={inviteUrl} readOnly onFocus={event => event.currentTarget.select()} />
-        <button className="secondary-button" type="button" onClick={() => void copy()}>URLをコピー</button>
+        <button className="secondary-button" type="button" onClick={() => void copy()}>{copyStatus ? copyStatus : "URLをコピー"}</button>
         <p role="status">{copyStatus}</p>
       </>}
       <p>再発行すると、古いリンクから新しく参加できなくなります。参加済みの人はそのまま利用できます。</p>
