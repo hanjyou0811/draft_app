@@ -102,7 +102,7 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
             )}
           </div>
         </div>
-        <p className="waiting-summary">参加者 {room.members.length}人 · 候補 {room.candidates.length}人 · 各チーム {room.teamSize}人 · 必要数 {required}人</p>
+        <p className="waiting-summary">参加者 {room.members.length}人 · 候補 {room.candidates.length}件 · 各チーム {room.teamSize} 件まで指名可能</p>
         <footer className="waiting-actions">
           <div className="waiting-readiness" aria-live="polite">
             {room.members.length < 2 && <p>あと1チーム以上の参加を待っています</p>}
