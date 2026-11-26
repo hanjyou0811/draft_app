@@ -93,7 +93,7 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
             )}
             {activeTab === 'invite' && (
               <div className="waiting-invite">
-                <h2>仲間を招待</h2><p>招待URLを共有して、参加者を招待できます。</p>
+                <h2>友達を招待</h2><p>招待URLを共有して、参加者を招待できます。</p>
                 <label htmlFor="invite-url">招待URL</label>
                 <input ref={inviteRef} id="invite-url" value={inviteUrl} readOnly onFocus={event => event.currentTarget.select()} />
                 <button className="secondary-button" type="button" onClick={() => void copy()}>URLをコピー</button>
