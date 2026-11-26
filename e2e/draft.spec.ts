@@ -24,6 +24,8 @@ async function createRoom(page: Page, hostName = '主催'): Promise<void> {
 async function inviteUrlFor(host: Page): Promise<string> {
   await host.getByRole('tab', { name: '招待URL', exact: true }).click();
   const input = host.getByRole('textbox', { name: '招待URL', exact: true });
+  await expect(input).toHaveValue(/^\*+$/u);
+  await host.getByRole('button', { name: '表示する', exact: true }).click();
   await expect(input).toHaveValue(/\/invite\//u);
   const inviteUrl = await input.inputValue();
   await host.getByRole('tab', { name: /参加者/ }).click();
