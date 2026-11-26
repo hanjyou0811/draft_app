@@ -40,7 +40,7 @@ export function DraftRoom({ room, syncStatus, busy, onPick }: DraftRoomProps) {
         <section className="draft-board" aria-labelledby="draft-title">
           <div className="draft-board__heading">
             <h1 id="draft-title">{completed ? 'ドラフト完了' : `第${room.round}巡`}</h1>
-            {!completed && <p>{room.attempt > 1 ? `再指名${room.attempt - 1}回目` : `参加者 ${room.members.length}人 · 各チーム ${room.teamSize}人`}</p>}
+            {!completed && <p>{room.attempt > 1 ? `再指名${room.attempt - 1}回目` : `参加者 ${room.members.length}人 · 各チーム ${room.teamSize}件`}</p>}
             <button className="room-text-button" type="button" disabled={!latest} onClick={() => historyDialog.current?.showModal()}>履歴を見る</button>
           </div>
           <DraftMatrix room={room} />
