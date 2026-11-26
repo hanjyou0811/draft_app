@@ -74,11 +74,10 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
           <div className="waiting-panel" role="tabpanel" id={`${id}-panel-${activeTab}`} aria-labelledby={`${id}-tab-${activeTab}`} tabIndex={0}>
             {activeTab === 'participants' && (
               <table className="waiting-members">
-                <thead><tr><th scope="col">参加者</th><th scope="col">状態</th></tr></thead>
+                <thead><tr><th scope="col">参加者</th></tr></thead>
                 <tbody>{room.members.map((member) => (
                   <tr key={member.id} data-own={member.id === room.ownMemberId ? 'true' : undefined}>
                     <td className="waiting-member-name"><strong>{member.name}</strong>{member.id === room.ownMemberId && <span className="waiting-member-badge">あなた</span>}{member.isHost && <span className="waiting-member-badge">主催者</span>}</td>
-                    <td><span className="waiting-member-status">参加済み</span></td>
                   </tr>
                 ))}</tbody>
               </table>
