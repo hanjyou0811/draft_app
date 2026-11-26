@@ -84,7 +84,7 @@ export function InvitationPanel({ credentials, version }: InvitationPanelProps) 
 
   return (
     <div className="waiting-invite" aria-busy={busy}>
-      <h2>仲間を招待</h2>
+      <h2>友達を招待</h2>
       <p>招待URLを共有して、参加者を招待できます。</p>
       {busy && <p role="status">招待リンクを読み込み中…</p>}
       {error && <><p role="alert">{error}</p><button className="secondary-button" type="button" onClick={() => void load()}>再読み込み</button></>}
