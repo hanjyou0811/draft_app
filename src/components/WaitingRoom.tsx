@@ -85,7 +85,7 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
             )}
             {activeTab === 'candidates' && (
               <section aria-label="候補一覧">
-                <h2>候補一覧 <span>{room.candidates.length}人</span></h2>
+                <h2>候補一覧 <span>{room.candidates.length} 件</span></h2>
                 <ol className="waiting-candidates">{room.candidates.map((candidate, index) => (
                   <li className="waiting-candidate" key={candidate.id}><span>{String(index + 1).padStart(3, '0')}</span><strong>{candidate.name}</strong></li>
                 ))}</ol>
