@@ -105,7 +105,7 @@ export function WaitingRoom({ room, syncStatus, busy, onStart }: WaitingRoomProp
         <footer className="waiting-actions">
           <div className="waiting-readiness" aria-live="polite">
             {room.members.length < 2 && <p>あと1チーム以上の参加を待っています</p>}
-            {shortage > 0 && <p>開始には候補があと{shortage}人必要です（必要{required}人／現在{room.candidates.length}人）。</p>}
+            {shortage > 0 && <p>開始には候補があと{shortage}件必要です（必要{required}人／現在{room.candidates.length}人）。</p>}
             {!own?.isHost && <p>主催者の開始を待っています</p>}
             {own?.isHost && ready && <p>参加者が揃ったら開始できます</p>}
             {syncStatus !== 'synced' && <p>接続の復旧を待っています</p>}
