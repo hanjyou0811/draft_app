@@ -33,13 +33,18 @@ async function joinRoom(browser: Browser, inviteUrl: string, name: string): Prom
 
 async function choose(page: Page, candidate: string): Promise<void> {
   await page.getByRole('radio', { name: candidate, exact: true }).check();
-  await page.getByRole('button', { name: 'この選手を指名する' }).click();
+  await page.getByRole('button', { name: '指名を確定' }).click();
 }
 
-function teamCard(page: Page, name: string) {
-  return page.getByRole('article').filter({
-    has: page.getByRole('heading', { name: `${name}のチーム` }),
-  });
+function participantEntry(page: Page, name: string) {
+  return page.getByRole('row').filter({ has: page.getByText(name, { exact: true }) });
+}
+
+async function expectTeamPick(page: Page, name: string, candidate: string) {
+  const matrix = page.getByRole('table', { name: 'ドラフト結果', exact: true });
+  const header = matrix.getByRole('columnheader', { name: `${name}のチーム`, exact: true });
+  const column = await header.evaluate((element: HTMLTableCellElement) => element.cellIndex);
+  await expect(matrix.locator('tbody tr').first().getByRole('cell').nth(column - 1)).toContainText(candidate);
 }
 
 function candidatePreview(page: Page) {
@@ -51,11 +56,12 @@ test('二つのブラウザで重複指名、再指名、完成、再読み込�
   const guest = await joinRoom(browser, host.url(), '参加者');
   await expect(host.getByText('参加者', { exact: true }).first()).toBeVisible();
   for (const page of [host, guest]) {
+    await page.getByRole('tab', { name: /候補リスト/ }).click();
     await expect(candidatePreview(page).getByText('青木', { exact: true })).toBeVisible();
     await expect(candidatePreview(page).getByText('遠藤', { exact: true })).toBeVisible();
   }
   await host.getByRole('button', { name: 'ドラフトを開始' }).click();
-  await expect(guest.getByRole('heading', { name: '第1巡 選択希望選手' })).toBeVisible();
+  await expect(guest.getByRole('heading', { name: '第1巡', exact: true })).toBeVisible();
 
   await Promise.all([choose(host, '青木'), choose(guest, '青木')]);
   await expect(host.getByRole('heading', { name: '抽選結果' })).toBeVisible();
@@ -66,24 +72,25 @@ test('二つのブラウザで重複指名、再指名、完成、再読み込�
   const winnerName = hostLost ? '参加者' : '主催';
   const loserName = hostLost ? '主催' : '参加者';
   await expect(winner.getByText('青木を獲得しました')).toBeVisible();
+  await expect(winner.locator('.draft-selection')).toContainText('獲得済み');
   await choose(loser, '伊藤');
 
   for (const page of [host, guest]) {
     await expect(page.getByRole('heading', { name: 'ドラフト完了' })).toBeVisible();
-    await expect(teamCard(page, winnerName).getByText('青木', { exact: true })).toBeVisible();
-    await expect(teamCard(page, loserName).getByText('伊藤', { exact: true })).toBeVisible();
+    await expectTeamPick(page, winnerName, '青木');
+    await expectTeamPick(page, loserName, '伊藤');
   }
-  await expect(teamCard(host, '主催')).toHaveClass(/team-card--own/u);
-  await expect(teamCard(guest, '参加者')).toHaveClass(/team-card--own/u);
+  await expect(host.getByRole('columnheader', { name: '主催のチーム', exact: true })).toHaveAttribute('data-own', 'true');
+  await expect(guest.getByRole('columnheader', { name: '参加者のチーム', exact: true })).toHaveAttribute('data-own', 'true');
   await host.reload();
   await guest.reload();
   for (const page of [host, guest]) {
     await expect(page.getByRole('heading', { name: 'ドラフト完了' })).toBeVisible();
-    await expect(teamCard(page, winnerName).getByText('青木', { exact: true })).toBeVisible();
-    await expect(teamCard(page, loserName).getByText('伊藤', { exact: true })).toBeVisible();
+    await expectTeamPick(page, winnerName, '青木');
+    await expectTeamPick(page, loserName, '伊藤');
   }
-  await expect(teamCard(host, '主催')).toHaveClass(/team-card--own/u);
-  await expect(teamCard(guest, '参加者')).toHaveClass(/team-card--own/u);
+  await expect(host.getByRole('columnheader', { name: '主催のチーム', exact: true })).toHaveAttribute('data-own', 'true');
+  await expect(guest.getByRole('columnheader', { name: '参加者のチーム', exact: true })).toHaveAttribute('data-own', 'true');
 });
 
 test('無効な招待URLと表示名の重複を日本語で説明する', async ({ page, browser }) => {
@@ -101,20 +108,21 @@ test('無効な招待URLと表示名の重複を日本語で説明する', async
 test('切断を表示して再同期し、390pxでも横にはみ出さず提出後の変更を防ぐ', async ({ page: host, browser }) => {
   await host.setViewportSize({ width: 390, height: 844 });
   await createRoom(host);
+  await host.getByRole('tab', { name: /候補リスト/ }).click();
   await expect(candidatePreview(host)).toBeVisible();
   expect(await host.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   const guest = await joinRoom(browser, host.url(), 'モバイル参加者');
   await host.getByRole('button', { name: 'ドラフトを開始' }).click();
-  await expect(host.getByText('同期済み')).toBeVisible();
+  await expect(host.getByRole('radio', { name: '上田', exact: true })).toBeEnabled();
   await host.context().setOffline(true);
   await expect(host.getByText('再接続中')).toBeVisible();
-  await expect(host.getByRole('button', { name: 'この選手を指名する' })).toBeDisabled();
+  await expect(host.getByRole('button', { name: '指名を確定' })).toBeDisabled();
   await host.context().setOffline(false);
-  await expect(host.getByText('同期済み')).toBeVisible();
+  await expect(host.getByRole('radio', { name: '上田', exact: true })).toBeEnabled();
   await choose(host, '上田');
   await expect(host.getByText('指名を受け付けました')).toBeVisible();
   await expect(host.getByRole('radio', { name: '伊藤', exact: true })).toBeDisabled();
-  await expect(host.getByRole('button', { name: 'この選手を指名する' })).toBeDisabled();
+  await expect(host.getByRole('button', { name: '指名を確定' })).toBeDisabled();
   expect(await host.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await expect(guest.getByText('主催: 指名済み', { exact: true })).toBeVisible();
 });
@@ -185,14 +193,14 @@ test('作成成功後の保存失敗でも履歴移動後に認証と警告を�
   await page.getByRole('button', { name: '会議を作成' }).click();
   await expect(page.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
   await expect(page.getByText('参加情報を永続保存できませんでした。')).toBeVisible();
-  await expect(teamCard(page, '履歴主催')).toHaveClass(/team-card--own/u);
+  await expect(participantEntry(page, '履歴主催')).toHaveAttribute('data-own', 'true');
 
   await page.goBack();
   await expect(page.getByRole('button', { name: 'ルーム作成', exact: true })).toBeVisible();
   await page.goForward();
   await expect(page.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
   await expect(page.getByText('参加情報を永続保存できませんでした。')).toBeVisible();
-  await expect(teamCard(page, '履歴主催')).toHaveClass(/team-card--own/u);
+  await expect(participantEntry(page, '履歴主催')).toHaveAttribute('data-own', 'true');
   expect(createRequests).toBe(1);
 });
 
@@ -236,5 +244,5 @@ test('初回の状態取得に失敗したときも再接続中と示して復�
   await expect(page.getByText('再接続中', { exact: false })).toBeVisible();
   await page.unroute(`**${roomPath}`);
   await expect(page.getByRole('heading', { name: 'ドラフト待機室' })).toBeVisible();
-  await expect(page.getByText('同期済み')).toBeVisible();
+  await expect(page.getByText('再接続中', { exact: false })).not.toBeVisible();
 });
